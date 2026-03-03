@@ -171,7 +171,10 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
   </div>
 </div>
 
-<div id="placeOverlay"><p>👆 Toca el PDF donde quieras colocar la firma</p></div>
+<div id="placeOverlay">
+  <p id="placeMsg">👆 Toca el PDF donde quieras colocar la firma</p>
+  <button id="confirmSigBtn" style="display:none;margin-top:10px;padding:10px 28px;border-radius:100px;border:none;background:#3dd68c;color:#041a08;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer" onclick="confirmPlaceSig()">✓ Confirmar posición</button>
+</div>
 
 <div id="dock">
   <button class="dbtn on" id="d-cursor" onclick="setTool('cursor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg></button>
@@ -214,7 +217,8 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
     <div style="text-align:center;padding:0 24px 20px;border-bottom:1px solid var(--brd)">
       <div style="font-size:2rem;margin-bottom:8px">⭐</div>
       <p style="font-size:1.2rem;font-weight:800;letter-spacing:-.02em">Rúbrica Pro</p>
-      <p style="font-size:.8rem;color:var(--mut);margin-top:4px">Sin anuncios, para siempre</p>
+      <p id="proModalMsg" style="font-size:.82rem;color:var(--acc2);margin-top:6px;font-weight:700">Has usado tus 3 guardados gratuitos</p>
+      <p style="font-size:.75rem;color:var(--mut);margin-top:4px">Hazte Pro para guardar y compartir sin límites</p>
     </div>
     <div style="padding:18px 24px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--brd)">
       <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">✓</span> Sin ningún anuncio</div>
@@ -394,19 +398,59 @@ mainEl.addEventListener('touchend',e=>{
 ixC.style.touchAction='pan-x pan-y'; // por defecto scroll libre
 
 ixC.addEventListener('touchstart',e=>{
-  if(e.touches.length===2||pinchActive) return; // dejar pinch al mainEl
-  if(!pdfDoc||placingSig) return;
-  if(tool==='cursor') return;
-  if(tool==='text'){e.preventDefault();addText(evXY(e.touches[0]));return;}
+  if(e.touches.length===2&&!activeSig){pinchActive=true;return;} // pinch zoom al mainEl
+  if(!pdfDoc) return;
   e.preventDefault();
+  // Firma activa en edición — gestionar drag/pinch de firma
+  if(activeSig){
+    if(e.touches.length===2){
+      sigPinchActive=true; sigDragActive=false;
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      sigPinchDist0=Math.sqrt(dx*dx+dy*dy);
+      sigPinchW0=activeSig.w; sigPinchH0=activeSig.h;
+    } else {
+      const p=evXY(e.touches[0]);
+      sigDragActive=true;
+      sigDragOX=p.x-activeSig.x; sigDragOY=p.y-activeSig.y;
+    }
+    return;
+  }
+  // Primer toque para colocar firma
+  if(placingSig&&sigUrl){
+    const p=evXY(e.touches[0]);
+    placeSig(p.x,p.y);
+    return;
+  }
+  if(tool==='cursor') return;
+  if(tool==='text'){addText(evXY(e.touches[0]));return;}
   ixC.style.touchAction='none';
   drawing=true;
   curPath={type:tool,color,width:strokeW,page:curPage,pts:[evXY(e.touches[0])]};
 },{passive:false});
 
 ixC.addEventListener('touchmove',e=>{
-  if(pinchActive||e.touches.length!==1||!drawing||!curPath) return;
   e.preventDefault();
+  // Redimensionar firma activa con pinch
+  if(activeSig&&sigPinchActive&&e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    const ratio=d/sigPinchDist0;
+    activeSig.w=Math.max(60,sigPinchW0*ratio);
+    activeSig.h=Math.max(24,sigPinchH0*ratio);
+    drawActiveSig();
+    return;
+  }
+  // Mover firma activa con 1 dedo
+  if(activeSig&&sigDragActive&&e.touches.length===1){
+    const p=evXY(e.touches[0]);
+    activeSig.x=p.x-sigDragOX;
+    activeSig.y=p.y-sigDragOY;
+    drawActiveSig();
+    return;
+  }
+  if(pinchActive||e.touches.length!==1||!drawing||!curPath) return;
   curPath.pts.push(evXY(e.touches[0]));
   ixX.clearRect(0,0,ixC.width,ixC.height);
   drawPath(ixX,curPath);
@@ -414,11 +458,12 @@ ixC.addEventListener('touchmove',e=>{
 
 ixC.addEventListener('touchend',e=>{
   ixC.style.touchAction='pan-x pan-y';
-  if(placingSig&&sigUrl&&!pinchActive){
-    e.preventDefault();
-    placeSig(evXY(e.changedTouches[0]).x,evXY(e.changedTouches[0]).y);
+  if(activeSig){
+    if(e.touches.length<2){sigPinchActive=false;}
+    if(e.touches.length===0){sigDragActive=false;}
     return;
   }
+  if(e.touches.length<2) pinchActive=false;
   if(!drawing||!curPath) return;
   drawing=false;
   if(curPath.pts.length>1){paths.push({...curPath,pts:[...curPath.pts]});redraw();}
@@ -540,13 +585,94 @@ function confirmSig(){
   tool='cursor';ixC.style.cursor='crosshair';
   document.getElementById('placeOverlay').classList.add('on');
 }
+// ── Firma interactiva: colocar, mover, redimensionar ──
+let activeSig = null; // {x,y,w,h,data} mientras se edita
+
 function placeSig(x,y){
-  const W=200,H=80;
-  paths.push({type:'sig',data:sigUrl,x:x-W/2,y:y-H/2,w:W,h:H,page:curPage});
-  redraw();placingSig=false;sigUrl=null;
+  const W=200, H=80;
+  activeSig = {x:x-W/2, y:y-H/2, w:W, h:H, data:sigUrl};
+  drawActiveSig();
+  document.getElementById('placeMsg').textContent='✦ Arrastra para mover · Pellizca para cambiar tamaño';
+  document.getElementById('confirmSigBtn').style.display='inline-block';
+}
+
+function drawActiveSig(){
+  if(!activeSig) return;
+  redraw(); // redibuja anotaciones existentes
+  // Dibujar firma activa con borde de selección
+  const img=new Image();
+  img.onload=()=>{
+    annX.drawImage(img, activeSig.x, activeSig.y, activeSig.w, activeSig.h);
+    // Borde de selección
+    annX.save();
+    annX.strokeStyle='#5b5fef';
+    annX.lineWidth=2;
+    annX.setLineDash([6,3]);
+    annX.strokeRect(activeSig.x-2, activeSig.y-2, activeSig.w+4, activeSig.h+4);
+    // Esquinas de resize
+    const cs=10;
+    annX.fillStyle='#5b5fef';
+    annX.setLineDash([]);
+    [[activeSig.x-2,activeSig.y-2],[activeSig.x+activeSig.w-cs+2,activeSig.y-2],
+     [activeSig.x-2,activeSig.y+activeSig.h-cs+2],[activeSig.x+activeSig.w-cs+2,activeSig.y+activeSig.h-cs+2]]
+    .forEach(([rx,ry])=>annX.fillRect(rx,ry,cs,cs));
+    annX.restore();
+  };
+  img.src=activeSig.data;
+}
+
+function confirmPlaceSig(){
+  if(!activeSig) return;
+  paths.push({type:'sig', data:activeSig.data, x:activeSig.x, y:activeSig.y, w:activeSig.w, h:activeSig.h, page:curPage});
+  activeSig=null;
+  redraw();
+  placingSig=false; sigUrl=null;
   ixC.style.cursor='crosshair';
   document.getElementById('placeOverlay').classList.remove('on');
+  document.getElementById('confirmSigBtn').style.display='none';
+  document.getElementById('placeMsg').textContent='👆 Toca el PDF donde quieras colocar la firma';
   toast('✦ Firma colocada','ok');
+}
+
+// Touch handlers para mover/resize la firma activa
+let sigDragActive=false, sigDragOX=0, sigDragOY=0;
+let sigPinchActive=false, sigPinchDist0=0, sigPinchW0=0, sigPinchH0=0;
+
+function handleSigTouch(e){
+  if(!activeSig) return false;
+  if(e.touches.length===2){
+    // Pinch — redimensionar
+    if(!sigPinchActive){
+      sigPinchActive=true;
+      sigDragActive=false;
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      sigPinchDist0=Math.sqrt(dx*dx+dy*dy);
+      sigPinchW0=activeSig.w;
+      sigPinchH0=activeSig.h;
+    }
+    return true;
+  }
+  if(e.touches.length===1){
+    // 1 dedo — mover
+    const p=evXY(e.touches[0]);
+    if(!sigDragActive){
+      // Comprobar si toca dentro de la firma
+      if(p.x>=activeSig.x-20&&p.x<=activeSig.x+activeSig.w+20&&
+         p.y>=activeSig.y-20&&p.y<=activeSig.y+activeSig.h+20){
+        sigDragActive=true;
+        sigDragOX=p.x-activeSig.x;
+        sigDragOY=p.y-activeSig.y;
+        return true;
+      }
+      // Tocó fuera — mover firma al nuevo punto
+      activeSig.x=p.x-activeSig.w/2;
+      activeSig.y=p.y-activeSig.h/2;
+      drawActiveSig();
+      return true;
+    }
+  }
+  return false;
 }
 
 function updateNav(){
@@ -560,13 +686,33 @@ async function goPage(d){
   await renderPage(n);setLoading(false);mainEl.scrollTo(0,0);
 }
 function doZoom(d){
-  scale=Math.min(4,Math.max(0.4,scale+d));
-  document.getElementById('zLbl').textContent=Math.round(scale/1.5*100)+'%';
-  if(pdfDoc)renderPage(curPage);
+  cssZ=Math.min(5,Math.max(0.3,cssZ+d));
+  cwEl.style.transform=`scale(${cssZ})`;
+  cwEl.style.transformOrigin='top center';
+  document.getElementById('zLbl').textContent=Math.round(cssZ*100)+'%';
+}
+
+// ── Control de usos gratuitos ──
+const USOS_GRATIS = 3;
+function getUsos(){ return parseInt(localStorage.getItem('rubrica_usos')||'0'); }
+function addUso(){ localStorage.setItem('rubrica_usos', getUsos()+1); }
+function checkUso(){
+  if(isPro) return true;
+  const usos = getUsos();
+  if(usos >= USOS_GRATIS){
+    openPro(true);
+    return false;
+  }
+  addUso();
+  const restantes = USOS_GRATIS - getUsos();
+  if(restantes > 0) toast(`Uso gratuito ${getUsos()}/${USOS_GRATIS} — te quedan ${restantes}`);
+  return true;
 }
 
 async function dlPDF(){
-  if(!pdfRaw)return;setLoading(true,'Generando PDF…');
+  if(!pdfRaw)return;
+  if(!checkUso()) return; // límite de usos
+  setLoading(true,'Generando PDF…');
   try{
     const{PDFDocument}=PDFLib;
     const rawCopy=pdfRaw.slice(0);
@@ -600,6 +746,7 @@ async function dlPDF(){
 // ── Compartir PDF ──
 async function sharePDF(){
   if(!pdfRaw){toast('Abre un PDF primero','err');return;}
+  if(!checkUso()) return; // límite de usos
   setLoading(true,'Preparando…');
   try{
     const{PDFDocument}=PDFLib;
@@ -656,7 +803,14 @@ function applyProState(){
   if(isPro){if(banner)banner.style.display='none';appEl.style.paddingBottom='0';if(proBtn)proBtn.title='Rúbrica Pro ⭐';}
   else{if(banner)banner.style.display='flex';appEl.style.paddingBottom='calc(50px + var(--safe-b))';}
 }
-function openPro(){if(isPro){toast('⭐ Ya tienes Rúbrica Pro','ok');return;}document.getElementById('proModal').style.display='flex';}
+function openPro(porLimite=false){
+  if(isPro){ toast('⭐ Ya tienes Rúbrica Pro','ok'); return; }
+  const msg = document.getElementById('proModalMsg');
+  if(msg) msg.textContent = porLimite
+    ? `Has usado tus ${USOS_GRATIS} guardados gratuitos`
+    : 'Desbloquea guardado y compartir ilimitados';
+  document.getElementById('proModal').style.display='flex';
+}
 function closePro(){document.getElementById('proModal').style.display='none';}
 function purchasePro(){
   const ok=confirm('Comprar Rúbrica Pro — 1,99€ pago único\n\n(En Play Store aparecería el diálogo de pago de Google)');
