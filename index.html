@@ -14,33 +14,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#0f0f1a;--s1:#17172a;--s2:#1e1e35;--s3:#26263f;
-  --brd:#303050;--acc:#5b5fef;--acc2:#ef5b8a;
-  --txt:#eaeaf8;--mut:#7070a0;--ok:#3dd68c;
-  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)
-}
+:root{--bg:#0f0f1a;--s1:#17172a;--s2:#1e1e35;--s3:#26263f;--brd:#303050;--acc:#5b5fef;--acc2:#ef5b8a;--txt:#eaeaf8;--mut:#7070a0;--ok:#3dd68c;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)}
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Syne',sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 #app{display:flex;flex-direction:column;height:100dvh;height:100vh;padding-bottom:calc(50px + var(--safe-b))}
-
-/* AD BANNER */
-#ad-banner{
-  position:fixed;bottom:0;left:0;right:0;
-  height:calc(50px + var(--safe-b));
-  padding-bottom:var(--safe-b);
-  background:var(--s1);
-  border-top:1px solid var(--brd);
-  display:flex;align-items:center;justify-content:center;
-  z-index:25;
-  /* subtle label */
-}
-#ad-banner::before{
-  content:'PUBLICIDAD';
-  position:absolute;top:3px;right:6px;
-  font-size:.5rem;color:var(--mut);font-family:'DM Mono',monospace;letter-spacing:.08em
-}
-
-/* TOP BAR */
+#ad-banner{position:fixed;bottom:0;left:0;right:0;height:calc(50px + var(--safe-b));padding-bottom:var(--safe-b);background:var(--s1);border-top:1px solid var(--brd);display:flex;align-items:center;justify-content:center;z-index:25}
+#ad-banner::before{content:'PUBLICIDAD';position:absolute;top:3px;right:6px;font-size:.5rem;color:var(--mut);font-family:'DM Mono',monospace;letter-spacing:.08em}
 #topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(var(--safe-t) + 10px) 14px 10px;background:var(--s1);border-bottom:1px solid var(--brd);flex-shrink:0;min-height:calc(var(--safe-t) + 54px);z-index:30}
 .logo{font-size:1.1rem;font-weight:800;letter-spacing:-.04em;background:linear-gradient(130deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .top-r{display:flex;gap:8px;align-items:center}
@@ -51,8 +29,6 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Syne',s
 .pill:active{transform:scale(.95)}
 .pill svg{width:14px;height:14px}
 input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
-
-/* TOOLBAR — secundario, solo scroll horizontal */
 #tb{display:flex;align-items:center;gap:3px;padding:7px 10px;background:var(--s2);border-bottom:1px solid var(--brd);flex-shrink:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;height:48px}
 #tb::-webkit-scrollbar{display:none}
 .tbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:46px;height:34px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--mut);cursor:pointer;font-family:'Syne',sans-serif;font-size:.55rem;font-weight:700;transition:.12s;flex-shrink:0;padding:0 5px}
@@ -73,78 +49,32 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 .znav button{width:24px;height:24px;border-radius:7px;border:1px solid var(--brd);background:var(--s3);color:var(--txt);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem}
 .znav button:active{background:var(--acc);border-color:var(--acc)}
 #zLbl{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mut);min-width:30px;text-align:center}
-
-/* ── FLOATING TOOL DOCK (bottom) ── */
-#dock{
-  position:fixed;
-  bottom:calc(50px + var(--safe-b) + 12px); /* above ad banner */
-  left:50%;transform:translateX(-50%);
-  display:none; /* shown when PDF loaded */
-  align-items:center;gap:6px;
-  background:rgba(18,18,32,.92);
-  border:1px solid var(--brd);
-  border-radius:100px;
-  padding:7px 10px;
-  box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);
-  backdrop-filter:blur(16px);
-  z-index:20;
-  white-space:nowrap;
-}
+#dock{position:fixed;bottom:calc(50px + var(--safe-b) + 12px);left:50%;transform:translateX(-50%);display:none;align-items:center;gap:6px;background:rgba(18,18,32,.92);border:1px solid var(--brd);border-radius:100px;padding:7px 10px;box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);backdrop-filter:blur(16px);z-index:20;white-space:nowrap}
 #dock.show{display:flex}
-.dbtn{
-  width:44px;height:44px;border-radius:50%;
-  border:1px solid transparent;
-  background:transparent;
-  color:var(--mut);
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:.15s;flex-shrink:0;
-  position:relative;
-}
+.dbtn{width:44px;height:44px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--mut);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
 .dbtn svg{width:20px;height:20px}
-.dbtn.on{background:var(--acc);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(91,95,239,.5)}
+.dbtn.on{background:var(--acc);color:#fff;box-shadow:0 3px 12px rgba(91,95,239,.5)}
 .dbtn:not(.on):active{background:var(--s3);color:var(--txt);transform:scale(.9)}
 .dbtn.sign{color:#f0c040}
 .dbtn.sign.on{background:#f0c040;color:#000}
-/* tooltip label under icon */
-.dbtn::after{
-  content:attr(data-tip);
-  position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
-  font-size:.5rem;font-family:'Syne',sans-serif;font-weight:700;
-  color:var(--mut);white-space:nowrap;pointer-events:none;
-  opacity:0;transition:.15s;
-}
-.dbtn:active::after{opacity:1}
 .dsep{width:1px;height:22px;background:var(--brd);flex-shrink:0;margin:0 2px}
-
-/* MAIN */
-#main{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;padding:16px;background:#08080f;background-image:radial-gradient(ellipse at 15% 40%,rgba(91,95,239,.07) 0%,transparent 55%),radial-gradient(ellipse at 85% 10%,rgba(239,91,138,.04) 0%,transparent 45%);position:relative}
-#main::-webkit-scrollbar{width:4px;height:4px}
-#main::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px}
-
-/* DROP ZONE */
+#main{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;padding:16px;background:#08080f;position:relative}
 #dz{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;height:100%;min-height:280px;border:2px dashed var(--brd);border-radius:18px;text-align:center;padding:28px 20px;transition:.2s}
 #dz.over{border-color:var(--acc);background:rgba(91,95,239,.06)}
-.dz-ic{width:74px;height:74px;border-radius:20px;background:linear-gradient(135deg,rgba(91,95,239,.18),rgba(239,91,138,.08));border:1px solid rgba(91,95,239,.25);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(91,95,239,.15)}
+.dz-ic{width:74px;height:74px;border-radius:20px;background:linear-gradient(135deg,rgba(91,95,239,.18),rgba(239,91,138,.08));border:1px solid rgba(91,95,239,.25);display:flex;align-items:center;justify-content:center}
 .dz-ic svg{width:36px;height:36px;color:var(--acc)}
 .dz-t{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
 .dz-s{font-size:.8rem;color:var(--mut);max-width:250px;line-height:1.6}
 .open-lbl{display:flex;align-items:center;justify-content:center;gap:9px;padding:14px 28px;border-radius:13px;background:linear-gradient(130deg,var(--acc),#8b8ff8);color:#fff;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 6px 26px rgba(91,95,239,.4);width:100%;max-width:270px;border:none}
 .open-lbl:active{transform:scale(.97)}
 .open-lbl svg{width:19px;height:19px}
-
-/* CANVAS WRAPPER */
-#cw{display:none;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 20px 50px rgba(0,0,0,.8);border-radius:3px;overflow:hidden}
+#cw{display:none;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 20px 50px rgba(0,0,0,.8);border-radius:3px;transform-origin:top left}
 #pdfC{display:block}
 #annC{position:absolute;top:0;left:0;pointer-events:none}
-#ixC{position:absolute;top:0;left:0;touch-action:none}
-
-/* PLACING OVERLAY */
+#ixC{position:absolute;top:0;left:0;touch-action:pan-x pan-y}
 #placeOverlay{display:none;position:fixed;top:0;left:0;right:0;padding:calc(var(--safe-t) + 12px) 16px 14px;background:linear-gradient(180deg,rgba(91,95,239,.96) 60%,transparent);z-index:40;pointer-events:none;text-align:center}
 #placeOverlay.on{display:block}
 #placeOverlay p{font-size:.82rem;font-weight:700;color:#fff}
-
-/* SIGNATURE MODAL */
 #sigM{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)}
 #sigM.open{display:flex}
 .ssheet{background:var(--s1);border:1px solid var(--brd);border-radius:22px 22px 0 0;padding:0 0 calc(var(--safe-b) + 14px);width:100%;max-width:600px;display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.7);animation:su .28s cubic-bezier(.32,1,.32,1)}
@@ -161,14 +91,10 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 .shbtn{flex:1;padding:12px;border-radius:11px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:.12s}
 .shbtn:active{transform:scale(.97)}
 .shbtn.p{background:linear-gradient(130deg,var(--acc),#8b8ff8);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(91,95,239,.4)}
-
-/* TOAST */
-#toast{position:fixed;bottom:calc(var(--safe-b) + 18px);left:50%;transform:translateX(-50%) translateY(70px);background:var(--s1);border:1px solid var(--brd);color:var(--txt);padding:9px 20px;border-radius:100px;font-size:.8rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:500;pointer-events:none;white-space:nowrap}
+#toast{position:fixed;bottom:calc(var(--safe-b) + 70px);left:50%;transform:translateX(-50%) translateY(70px);background:var(--s1);border:1px solid var(--brd);color:var(--txt);padding:9px 20px;border-radius:100px;font-size:.8rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:500;pointer-events:none;white-space:nowrap}
 #toast.ok{background:var(--ok);color:#041a08;border-color:transparent}
 #toast.err{background:var(--acc2);color:#fff;border-color:transparent}
 #toast.show{transform:translateX(-50%) translateY(0)}
-
-/* LOADING */
 #loading{display:none;position:fixed;inset:0;background:rgba(8,8,15,.92);z-index:600;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 #loading.on{display:flex}
 .spin{width:40px;height:40px;border:3px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:rot .75s linear infinite}
@@ -190,49 +116,34 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
       </label>
       <button class="pill" id="dlBtn" style="display:none" onclick="dlPDF()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Guardar PDF
+        Guardar
       </button>
     </div>
   </div>
-
   <div id="tb">
-    <button class="tbtn on" id="t-cursor" onclick="setTool('cursor')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg>VER
-    </button>
-    <button class="tbtn" id="t-draw" onclick="setTool('draw')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>DIBUJAR
-    </button>
-    <button class="tbtn" id="t-highlight" onclick="setTool('highlight')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/><line x1="8" y1="9" x2="8" y2="16"/></svg>RESALTAR
-    </button>
-    <button class="tbtn" id="t-text" onclick="setTool('text')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>TEXTO
-    </button>
-    <button class="tbtn" id="t-sign" onclick="openSig()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg>FIRMAR
-    </button>
+    <button class="tbtn on" id="t-cursor" onclick="setTool('cursor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg>VER</button>
+    <button class="tbtn" id="t-draw" onclick="setTool('draw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>DIBUJAR</button>
+    <button class="tbtn" id="t-highlight" onclick="setTool('highlight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/><line x1="8" y1="9" x2="8" y2="16"/></svg>RESALTAR</button>
+    <button class="tbtn" id="t-text" onclick="setTool('text')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>TEXTO</button>
+    <button class="tbtn" id="t-sign" onclick="openSig()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg>FIRMAR</button>
     <div class="sep"></div>
     <div id="colRow" style="display:flex;gap:5px;align-items:center;flex-shrink:0">
-      <div class="cdot on"  style="background:#1a1aff" data-c="#1a1aff" onclick="setCol(this)"></div>
-      <div class="cdot"     style="background:#dd0000" data-c="#dd0000" onclick="setCol(this)"></div>
-      <div class="cdot"     style="background:#006600" data-c="#006600" onclick="setCol(this)"></div>
-      <div class="cdot"     style="background:#ff7700" data-c="#ff7700" onclick="setCol(this)"></div>
-      <div class="cdot"     style="background:#111111" data-c="#111111" onclick="setCol(this)"></div>
+      <div class="cdot on" style="background:#1a1aff" data-c="#1a1aff" onclick="setCol(this)"></div>
+      <div class="cdot" style="background:#dd0000" data-c="#dd0000" onclick="setCol(this)"></div>
+      <div class="cdot" style="background:#006600" data-c="#006600" onclick="setCol(this)"></div>
+      <div class="cdot" style="background:#ff7700" data-c="#ff7700" onclick="setCol(this)"></div>
+      <div class="cdot" style="background:#111111" data-c="#111111" onclick="setCol(this)"></div>
     </div>
     <div class="sep"></div>
     <input type="range" id="pw" min="1" max="20" value="3">
     <div class="sep"></div>
-    <button class="tbtn" onclick="undo()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>DESHACER
-    </button>
-    <button class="tbtn" onclick="clearPg()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>LIMPIAR
-    </button>
+    <button class="tbtn" onclick="undo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>DESHACER</button>
+    <button class="tbtn" onclick="clearPg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>LIMPIAR</button>
     <div class="sep"></div>
     <div class="znav">
-      <button onclick="doZoom(-.2)">−</button>
+      <button onclick="doZoom(-.25)">−</button>
       <span id="zLbl">100%</span>
-      <button onclick="doZoom(.2)">+</button>
+      <button onclick="doZoom(.25)">+</button>
     </div>
     <div class="sep"></div>
     <div class="pnav">
@@ -241,18 +152,16 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
       <button id="nextBtn" onclick="goPage(1)" disabled>›</button>
     </div>
   </div>
-
   <div id="main">
     <div id="dz">
       <div class="dz-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
       <p class="dz-t">Abre un PDF</p>
-      <p class="dz-s">Selecciona un PDF de tu dispositivo para leer, anotar o firmar</p>
+      <p class="dz-s">Selecciona un PDF para leer, anotar o firmar</p>
       <label class="open-lbl">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Seleccionar PDF
         <input type="file" id="fi2" accept="application/pdf,.pdf">
       </label>
-      <p style="font-size:.7rem;color:var(--mut);font-family:'DM Mono',monospace">o arrastra un PDF aquí</p>
     </div>
     <div id="cw">
       <canvas id="pdfC"></canvas>
@@ -264,37 +173,21 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 
 <div id="placeOverlay"><p>👆 Toca el PDF donde quieras colocar la firma</p></div>
 
-<!-- ── FLOATING DOCK ── -->
 <div id="dock">
-  <button class="dbtn on" id="d-cursor" data-tip="VER" onclick="setTool('cursor')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg>
-  </button>
-  <button class="dbtn" id="d-draw" data-tip="DIBUJAR" onclick="setTool('draw')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>
-  </button>
-  <button class="dbtn" id="d-highlight" data-tip="RESALTAR" onclick="setTool('highlight')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/><line x1="8" y1="9" x2="8" y2="16"/></svg>
-  </button>
-  <button class="dbtn" id="d-text" data-tip="TEXTO" onclick="setTool('text')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
-  </button>
+  <button class="dbtn on" id="d-cursor" onclick="setTool('cursor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg></button>
+  <button class="dbtn" id="d-draw" onclick="setTool('draw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg></button>
+  <button class="dbtn" id="d-highlight" onclick="setTool('highlight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/><line x1="8" y1="9" x2="8" y2="16"/></svg></button>
+  <button class="dbtn" id="d-text" onclick="setTool('text')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg></button>
   <div class="dsep"></div>
-  <button class="dbtn sign" id="d-sign" data-tip="FIRMAR" onclick="openSig()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg>
-  </button>
+  <button class="dbtn sign" id="d-sign" onclick="openSig()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg></button>
   <div class="dsep"></div>
-  <button class="dbtn" data-tip="DESHACER" onclick="undo()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-  </button>
+  <button class="dbtn" onclick="undo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></button>
 </div>
 
 <div id="sigM">
   <div class="ssheet">
     <div class="shandle"></div>
-    <div class="shdr">
-      <span class="shtitle">✦ Dibuja tu firma</span>
-      <button class="shclose" onclick="closeSig()">✕</button>
-    </div>
+    <div class="shdr"><span class="shtitle">✦ Dibuja tu firma</span><button class="shclose" onclick="closeSig()">✕</button></div>
     <canvas id="sigC"></canvas>
     <p class="shint">Firma con el dedo · después toca el PDF donde colocarla</p>
     <div class="sigcols">
@@ -313,71 +206,33 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 <div id="loading"><div class="spin"></div><span id="ldmsg">Cargando…</span></div>
 <div id="toast"></div>
 
-<!-- ═══ PRO MODAL ═══ -->
 <div id="proModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
   <div style="background:var(--s1);border:1px solid var(--brd);border-radius:22px 22px 0 0;padding:0 0 calc(var(--safe-b)+16px);width:100%;max-width:500px;animation:su .28s cubic-bezier(.32,1,.32,1)">
     <div style="width:38px;height:4px;border-radius:2px;background:var(--brd);margin:13px auto 20px"></div>
-
-    <!-- Header -->
     <div style="text-align:center;padding:0 24px 20px;border-bottom:1px solid var(--brd)">
       <div style="font-size:2rem;margin-bottom:8px">⭐</div>
       <p style="font-size:1.2rem;font-weight:800;letter-spacing:-.02em">Rúbrica Pro</p>
       <p style="font-size:.8rem;color:var(--mut);margin-top:4px">Sin anuncios, para siempre</p>
     </div>
-
-    <!-- Benefits -->
     <div style="padding:18px 24px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--brd)">
-      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem">
-        <span style="color:var(--ok);font-size:1rem">✓</span> Sin ningún anuncio
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem">
-        <span style="color:var(--ok);font-size:1rem">✓</span> Más espacio en pantalla
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem">
-        <span style="color:var(--ok);font-size:1rem">✓</span> Apoya el desarrollo de la app
-      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">✓</span> Sin ningún anuncio</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">✓</span> Más espacio en pantalla</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">✓</span> Apoya el desarrollo de la app</div>
     </div>
-
-    <!-- Pricing -->
     <div style="padding:16px 16px 8px;display:flex;flex-direction:column;gap:10px">
-
-      <!-- Pago único -->
-      <button onclick="purchasePro()" style="
-        width:100%;padding:18px;border-radius:13px;
-        border:2px solid #f0c040;background:rgba(240,192,64,.08);
-        color:var(--txt);font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
-        cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-        transition:.15s;text-align:left
-      ">
-        <div>
-          <div>Eliminar anuncios</div>
-          <div style="font-size:.73rem;color:var(--mut);font-weight:400;margin-top:3px">Pago único · sin más cargos nunca</div>
-        </div>
+      <button onclick="purchasePro()" style="width:100%;padding:18px;border-radius:13px;border:2px solid #f0c040;background:rgba(240,192,64,.08);color:var(--txt);font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;text-align:left">
+        <div><div>Eliminar anuncios</div><div style="font-size:.73rem;color:var(--mut);font-weight:400;margin-top:3px">Pago único · sin más cargos nunca</div></div>
         <div style="font-size:1.3rem;font-weight:800;color:#f0c040">1,99€</div>
       </button>
-
-      <button onclick="closePro()" style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--brd);background:transparent;color:var(--mut);font-family:'Syne',sans-serif;font-size:.8rem;cursor:pointer">
-        Ahora no
-      </button>
+      <button onclick="closePro()" style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--brd);background:transparent;color:var(--mut);font-family:'Syne',sans-serif;font-size:.8rem;cursor:pointer">Ahora no</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     BANNER PUBLICITARIO (pie de página)
-     ─────────────────────────────────────
-     Cuando tengas tu cuenta de Google AdSense:
-     1. Ve a adsense.google.com
-     2. Crea un anuncio tipo "Banner 320x50"
-     3. Reemplaza TODO este bloque por el
-        código <script> que te dan
-═══════════════════════════════════════ -->
 <div id="ad-banner">
-  <!-- PLACEHOLDER — reemplazar con código AdSense -->
   <div style="width:320px;height:50px;background:var(--s2);border:1px dashed var(--brd);border-radius:6px;display:flex;align-items:center;justify-content:center;">
     <span style="font-size:.7rem;color:var(--mut);font-family:'DM Mono',monospace">Aquí irá tu anuncio AdSense</span>
   </div>
-  <!-- FIN PLACEHOLDER -->
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -391,13 +246,11 @@ let tool='cursor',color='#1a1aff',strokeW=3;
 let drawing=false,curPath=null,paths=[];
 let sigUrl=null,sigCol='#111',placingSig=false,sigDraw=false;
 const PR=window.devicePixelRatio||1;
-
 const mainEl=document.getElementById('main');
 const pdfC=document.getElementById('pdfC'),annC=document.getElementById('annC'),ixC=document.getElementById('ixC');
 const pdfX=pdfC.getContext('2d'),annX=annC.getContext('2d'),ixX=ixC.getContext('2d');
 const sigCv=document.getElementById('sigC'),sigX=sigCv.getContext('2d');
 
-// ── File inputs ──
 ['fi1','fi2'].forEach(id=>{
   document.getElementById(id).addEventListener('change',function(){
     const f=this.files&&this.files[0];if(f)loadFile(f);this.value='';
@@ -412,7 +265,6 @@ dz.addEventListener('drop',e=>{
   else toast('Solo se aceptan archivos PDF','err');
 });
 
-// ── Load ──
 async function loadFile(file){
   setLoading(true,'Abriendo PDF…');
   const reader=new FileReader();
@@ -422,10 +274,10 @@ async function loadFile(file){
       const task=pdfjsLib.getDocument({data:new Uint8Array(pdfRaw)});
       task.onPassword=(updatePwd,reason)=>{
         setLoading(false);
-        const msg=reason===1?'🔒 Este PDF está protegido. Introduce la contraseña:':'❌ Contraseña incorrecta. Inténtalo de nuevo:';
+        const msg=reason===1?'🔒 Introduce la contraseña:':'❌ Contraseña incorrecta:';
         const pwd=prompt(msg);
         if(pwd===null){toast('PDF cancelado','err');return;}
-        setLoading(true,'Verificando contraseña…');
+        setLoading(true,'Verificando…');
         updatePwd(pwd);
       };
       pdfDoc=await task.promise;
@@ -447,9 +299,7 @@ async function loadFile(file){
 async function renderPage(n){
   const page=await pdfDoc.getPage(n);
   const vp=page.getViewport({scale});
-  // CSS size
   [pdfC,annC,ixC].forEach(c=>{c.style.width=vp.width+'px';c.style.height=vp.height+'px'});
-  // Pixel size (HiDPI)
   [pdfC,annC,ixC].forEach(c=>{c.width=Math.round(vp.width*PR);c.height=Math.round(vp.height*PR)});
   pdfX.setTransform(PR,0,0,PR,0,0);
   annX.setTransform(PR,0,0,PR,0,0);
@@ -458,16 +308,15 @@ async function renderPage(n){
   redraw();
 }
 
-// ── Tools ──
 function setTool(t){
   tool=t;placingSig=false;
-  // sync top toolbar
   document.querySelectorAll('.tbtn[id^="t-"]').forEach(b=>b.classList.remove('on'));
   const el=document.getElementById('t-'+t);if(el)el.classList.add('on');
-  // sync dock
   document.querySelectorAll('.dbtn[id^="d-"]').forEach(b=>b.classList.remove('on'));
   const del=document.getElementById('d-'+t);if(del)del.classList.add('on');
   ixC.style.cursor=t==='cursor'?'default':'crosshair';
+  // En modo cursor/ver: permitir scroll. En modo dibujo: bloquar para dibujar
+  ixC.style.touchAction=t==='cursor'?'pan-x pan-y':'none';
   document.getElementById('placeOverlay').classList.remove('on');
 }
 function setCol(el){
@@ -477,70 +326,117 @@ function setCol(el){
 }
 document.getElementById('pw').oninput=e=>strokeW=+e.target.value;
 
-// ── Pointer events ──
-// ── Coordinate helper — works for touches AND changedTouches ──
-function evXY(e){
-  // For touchend, touches[] is empty — use changedTouches
-  const src = e.touches && e.touches.length > 0
-    ? e.touches[0]
-    : e.changedTouches && e.changedTouches.length > 0
-      ? e.changedTouches[0]
-      : e;
-  const rect = ixC.getBoundingClientRect();
-  const cssX = Math.max(0, Math.min(src.clientX - rect.left, rect.width));
-  const cssY = Math.max(0, Math.min(src.clientY - rect.top,  rect.height));
-  const cssW = parseFloat(ixC.style.width)  || rect.width;
-  const cssH = parseFloat(ixC.style.height) || rect.height;
-  return { x: cssX * (cssW / rect.width), y: cssY * (cssH / rect.height) };
+// ── Coordenadas ──
+function evXY(touch){
+  const rect=ixC.getBoundingClientRect();
+  const cssX=Math.max(0,Math.min(touch.clientX-rect.left,rect.width));
+  const cssY=Math.max(0,Math.min(touch.clientY-rect.top,rect.height));
+  const cssW=parseFloat(ixC.style.width)||rect.width;
+  const cssH=parseFloat(ixC.style.height)||rect.height;
+  return{x:cssX*(cssW/rect.width),y:cssY*(cssH/rect.height)};
 }
 
-// ── Signature placement: use touchend/mouseup so coords are from changedTouches ──
-function handlePlaceTap(e){
-  if(!placingSig || !sigUrl) return;
-  e.preventDefault();e.stopPropagation();
-  const p = evXY(e);
-  placeSig(p.x, p.y);
-}
-ixC.addEventListener('mouseup', e => {
-  if(placingSig && sigUrl){ handlePlaceTap(e); return; }
-  pUp(e);
-});
+// ── PINCH + DRAW — UN SOLO LISTENER ──
+let pinchActive=false,pinchDist0=0,pinchScale0=1;
 
-// ── Drawing events ──
-ixC.addEventListener('mousedown',  pDown);
-ixC.addEventListener('mousemove',  pMove);
-ixC.addEventListener('mouseleave', pUp);
-ixC.addEventListener('touchstart', pDown,{passive:false});
-ixC.addEventListener('touchmove',  pMove,{passive:false});
-ixC.addEventListener('touchcancel',pUp,  {passive:false});
-function pDown(e){
-  if(!pdfDoc || placingSig) return;
-  if(e.touches && e.touches.length===2) return; // dejar pinch al main
-  e.preventDefault();e.stopPropagation();
+function dist2(e){
+  const dx=e.touches[0].clientX-e.touches[1].clientX;
+  const dy=e.touches[0].clientY-e.touches[1].clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+
+ixC.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){
+    // Dos dedos — pinch zoom
+    e.preventDefault();
+    pinchActive=true;
+    drawing=false;curPath=null;
+    ixX.clearRect(0,0,ixC.width,ixC.height);
+    pinchDist0=dist2(e);
+    pinchScale0=scale;
+    // Bloquear scroll mientras hacemos pinch
+    ixC.style.touchAction='none';
+    return;
+  }
+  // Un dedo — dibujar
+  if(!pdfDoc||placingSig) return;
   if(tool==='cursor') return;
-  if(tool==='text'){ addText(evXY(e)); return; }
+  if(tool==='text'){e.preventDefault();addText(evXY(e.touches[0]));return;}
+  // Bloquear scroll solo cuando dibujamos
+  ixC.style.touchAction='none';
+  e.preventDefault();
   drawing=true;
-  curPath={type:tool,color,width:strokeW,page:curPage,pts:[evXY(e)]};
-}
-function pMove(e){
-  if(!pdfDoc || placingSig) return;
-  if(e.touches && e.touches.length===2) return; // dejar pinch al main
-  e.preventDefault();e.stopPropagation();
-  if(!drawing||!curPath)return;
-  curPath.pts.push(evXY(e));
+  curPath={type:tool,color,width:strokeW,page:curPage,pts:[evXY(e.touches[0])]};
+},{passive:false});
+
+ixC.addEventListener('touchmove',e=>{
+  if(pinchActive && e.touches.length===2){
+    e.preventDefault();
+    const d=dist2(e);
+    const ns=Math.min(4,Math.max(0.4,pinchScale0*(d/pinchDist0)));
+    if(Math.abs(ns-scale)>0.02){
+      scale=ns;
+      document.getElementById('zLbl').textContent=Math.round(scale/1.5*100)+'%';
+      if(pdfDoc)renderPage(curPage);
+    }
+    return;
+  }
+  if(!drawing||!curPath||e.touches.length!==1) return;
+  e.preventDefault();
+  curPath.pts.push(evXY(e.touches[0]));
   ixX.clearRect(0,0,ixC.width,ixC.height);
   drawPath(ixX,curPath);
-}
-function pUp(e){
-  if(!drawing||!curPath)return;
+},{passive:false});
+
+ixC.addEventListener('touchend',e=>{
+  if(e.touches.length<2){
+    pinchActive=false;
+    // Restaurar scroll cuando no dibujamos
+    if(tool==='cursor') ixC.style.touchAction='pan-x pan-y';
+  }
+  if(placingSig&&sigUrl&&!pinchActive){
+    e.preventDefault();
+    const t=e.changedTouches[0];
+    placeSig(evXY(t).x,evXY(t).y);
+    return;
+  }
+  if(!drawing||!curPath) return;
   drawing=false;
+  ixC.style.touchAction='pan-x pan-y';
   if(curPath.pts.length>1){paths.push({...curPath,pts:[...curPath.pts]});redraw();}
   ixX.clearRect(0,0,ixC.width,ixC.height);
   curPath=null;
-}
+},{passive:false});
+
+// Mouse (desktop)
+ixC.addEventListener('mousedown',e=>{
+  if(!pdfDoc||placingSig) return;
+  if(tool==='cursor') return;
+  if(tool==='text'){addText(evXY(e));return;}
+  drawing=true;curPath={type:tool,color,width:strokeW,page:curPage,pts:[evXY(e)]};
+});
+ixC.addEventListener('mousemove',e=>{
+  if(!drawing||!curPath) return;
+  curPath.pts.push(evXY(e));
+  ixX.clearRect(0,0,ixC.width,ixC.height);
+  drawPath(ixX,curPath);
+});
+ixC.addEventListener('mouseup',e=>{
+  if(placingSig&&sigUrl){placeSig(evXY(e).x,evXY(e).y);return;}
+  if(!drawing||!curPath) return;
+  drawing=false;
+  if(curPath.pts.length>1){paths.push({...curPath,pts:[...curPath.pts]});redraw();}
+  ixX.clearRect(0,0,ixC.width,ixC.height);curPath=null;
+});
+ixC.addEventListener('mouseleave',e=>{
+  if(!drawing||!curPath) return;
+  drawing=false;
+  if(curPath.pts.length>1){paths.push({...curPath,pts:[...curPath.pts]});redraw();}
+  ixX.clearRect(0,0,ixC.width,ixC.height);curPath=null;
+});
 
 function drawPath(ctx,p){
-  if(!p.pts||p.pts.length<2)return;
+  if(!p.pts||p.pts.length<2) return;
   ctx.save();
   if(p.type==='highlight'){ctx.globalAlpha=.32;ctx.strokeStyle='#f0d060';ctx.lineWidth=22;}
   else{ctx.strokeStyle=p.color;ctx.lineWidth=p.width;}
@@ -550,18 +446,16 @@ function drawPath(ctx,p){
     const mx=(p.pts[i].x+p.pts[i+1].x)/2,my=(p.pts[i].y+p.pts[i+1].y)/2;
     ctx.quadraticCurveTo(p.pts[i].x,p.pts[i].y,mx,my);
   }
-  const l=p.pts[p.pts.length-1];ctx.lineTo(l.x,l.y);
+  ctx.lineTo(p.pts[p.pts.length-1].x,p.pts[p.pts.length-1].y);
   ctx.stroke();ctx.restore();
 }
 
 function redraw(){
   annX.clearRect(0,0,annC.width,annC.height);
   paths.filter(p=>p.page===curPage).forEach(p=>{
-    if(p.type==='sig'){
-      const img=new Image();img.onload=()=>annX.drawImage(img,p.x,p.y,p.w,p.h);img.src=p.data;
-    }else if(p.type==='text'){
-      annX.save();annX.font=`${Math.round(14*scale)}px Arial`;annX.fillStyle=p.color;annX.fillText(p.text,p.x,p.y);annX.restore();
-    }else{drawPath(annX,p);}
+    if(p.type==='sig'){const img=new Image();img.onload=()=>annX.drawImage(img,p.x,p.y,p.w,p.h);img.src=p.data;}
+    else if(p.type==='text'){annX.save();annX.font=`${Math.round(14*scale)}px Arial`;annX.fillStyle=p.color;annX.fillText(p.text,p.x,p.y);annX.restore();}
+    else drawPath(annX,p);
   });
 }
 
@@ -569,7 +463,7 @@ function addText(pos){const t=prompt('Escribe el texto:');if(!t)return;paths.pus
 function undo(){const idx=paths.reduce((a,p,i)=>p.page===curPage?[...a,i]:a,[]);if(idx.length){paths.splice(idx[idx.length-1],1);redraw();toast('Deshecho')}}
 function clearPg(){if(!confirm('¿Limpiar anotaciones de esta página?'))return;paths=paths.filter(p=>p.page!==curPage);redraw();}
 
-// ── Signature ──
+// ── Firma ──
 function openSig(){
   const w=Math.min(window.innerWidth-32,568),h=180;
   sigCv.style.width=w+'px';sigCv.style.height=h+'px';
@@ -582,84 +476,61 @@ function closeSig(){document.getElementById('sigM').classList.remove('open');}
 function setSigCol(el){sigCol=el.dataset.c;document.querySelectorAll('#sigM .cdot').forEach(e=>e.classList.remove('on'));el.classList.add('on');}
 function clearSigC(){
   sigX.clearRect(0,0,sigCv.width,sigCv.height);
-  // Light background so user can see dark ink, but white so brightness trick works
-  sigX.fillStyle='#fff';
-  sigX.fillRect(0,0,sigCv.width,sigCv.height);
-  // Draw a subtle baseline guide
-  sigX.strokeStyle='rgba(91,95,239,.15)';
-  sigX.lineWidth=1;
-  sigX.setLineDash([6,4]);
+  sigX.fillStyle='#fff';sigX.fillRect(0,0,sigCv.width,sigCv.height);
+  sigX.strokeStyle='rgba(91,95,239,.15)';sigX.lineWidth=1;sigX.setLineDash([6,4]);
   const y=Math.round(sigCv.height/PR*0.65);
   sigX.beginPath();sigX.moveTo(20,y);sigX.lineTo(sigCv.width/PR-20,y);sigX.stroke();
   sigX.setLineDash([]);
 }
-
 function getSigXY(e){
   const r=sigCv.getBoundingClientRect();
   const s=e.touches&&e.touches.length>0?e.touches[0]:e.changedTouches&&e.changedTouches.length>0?e.changedTouches[0]:e;
-  const cw=parseFloat(sigCv.style.width)||r.width;
-  const ch=parseFloat(sigCv.style.height)||r.height;
-  return{x:(s.clientX-r.left)*(cw/r.width),y:(s.clientY-r.top)*(ch/r.height)};
+  return{x:(s.clientX-r.left)*(parseFloat(sigCv.style.width)||r.width)/r.width,y:(s.clientY-r.top)*(parseFloat(sigCv.style.height)||r.height)/r.height};
 }
 function sigStroke(e,start){
   if(start){sigDraw=true;const p=getSigXY(e);sigX.beginPath();sigX.moveTo(p.x,p.y);return;}
   if(!sigDraw)return;
-  const p=getSigXY(e);
-  sigX.strokeStyle=sigCol;sigX.lineWidth=3;sigX.lineCap='round';sigX.lineJoin='round';
-  sigX.lineTo(p.x,p.y);sigX.stroke();
+  const p=getSigXY(e);sigX.strokeStyle=sigCol;sigX.lineWidth=3;sigX.lineCap='round';sigX.lineJoin='round';sigX.lineTo(p.x,p.y);sigX.stroke();
 }
-sigCv.addEventListener('mousedown', e=>{sigStroke(e,true)});
-sigCv.addEventListener('mousemove', e=>{sigStroke(e,false)});
-sigCv.addEventListener('mouseup',   ()=>sigDraw=false);
+sigCv.addEventListener('mousedown',e=>sigStroke(e,true));
+sigCv.addEventListener('mousemove',e=>sigStroke(e,false));
+sigCv.addEventListener('mouseup',()=>sigDraw=false);
 sigCv.addEventListener('touchstart',e=>{e.preventDefault();sigStroke(e,true)},{passive:false});
-sigCv.addEventListener('touchmove', e=>{e.preventDefault();sigStroke(e,false)},{passive:false});
-sigCv.addEventListener('touchend',  ()=>sigDraw=false);
+sigCv.addEventListener('touchmove',e=>{e.preventDefault();sigStroke(e,false)},{passive:false});
+sigCv.addEventListener('touchend',()=>sigDraw=false);
 
 function confirmSig(){
-  // Verify ink exists
   const d=sigX.getImageData(0,0,sigCv.width,sigCv.height).data;
   let ink=false;
   for(let i=0;i<d.length;i+=4){if(d[i+3]>10&&!(d[i]>230&&d[i+1]>230&&d[i+2]>230)){ink=true;break;}}
   if(!ink){toast('Dibuja tu firma primero','err');return;}
-
-  // ── Eliminar fondo blanco: convertir blanco en transparente ──
   const tmp=document.createElement('canvas');
   tmp.width=sigCv.width;tmp.height=sigCv.height;
-  const tx=tmp.getContext('2d');
-  tx.drawImage(sigCv,0,0);
-  const imgData=tx.getImageData(0,0,tmp.width,tmp.height);
-  const px=imgData.data;
+  const tx=tmp.getContext('2d');tx.drawImage(sigCv,0,0);
+  const img=tx.getImageData(0,0,tmp.width,tmp.height),px=img.data;
   for(let i=0;i<px.length;i+=4){
-    const r=px[i],g=px[i+1],b=px[i+2];
-    // Calcular luminosidad — cuanto más blanco, más transparente
-    const brightness=(r+g+b)/3;
-    const alpha=Math.round(255*(1-brightness/255));
-    px[i+3]=Math.min(px[i+3],alpha<30?0:alpha);
+    const br=(px[i]+px[i+1]+px[i+2])/3;
+    const al=Math.round(255*(1-br/255));
+    px[i+3]=al<30?0:al;
   }
-  tx.putImageData(imgData,0,0);
+  tx.putImageData(img,0,0);
   sigUrl=tmp.toDataURL('image/png');
-
-  closeSig();
-  placingSig=true;
-  document.querySelectorAll('.tbtn[id^="t-"]').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('.dbtn[id^="d-"]').forEach(b=>b.classList.remove('on'));
+  closeSig();placingSig=true;
+  document.querySelectorAll('.tbtn[id^="t-"],.dbtn[id^="d-"]').forEach(b=>b.classList.remove('on'));
   document.getElementById('t-cursor').classList.add('on');
   document.getElementById('d-cursor').classList.add('on');
   tool='cursor';ixC.style.cursor='crosshair';
   document.getElementById('placeOverlay').classList.add('on');
 }
-
 function placeSig(x,y){
   const W=200,H=80;
   paths.push({type:'sig',data:sigUrl,x:x-W/2,y:y-H/2,w:W,h:H,page:curPage});
-  redraw();
-  placingSig=false;sigUrl=null;
+  redraw();placingSig=false;sigUrl=null;
   ixC.style.cursor='crosshair';
   document.getElementById('placeOverlay').classList.remove('on');
   toast('✦ Firma colocada','ok');
 }
 
-// ── Nav / zoom ──
 function updateNav(){
   document.getElementById('pgI').textContent=curPage+'/'+totPages;
   document.getElementById('prevBtn').disabled=curPage<=1;
@@ -676,49 +547,6 @@ function doZoom(d){
   if(pdfDoc)renderPage(curPage);
 }
 
-// ── Pinch to zoom — attached to ixC so it catches all touches ──
-let pinchActive=false, pinchStartDist=0, pinchStartScale=1;
-
-function getPinchDist(e){
-  const dx=e.touches[0].clientX-e.touches[1].clientX;
-  const dy=e.touches[0].clientY-e.touches[1].clientY;
-  return Math.sqrt(dx*dx+dy*dy);
-}
-
-ixC.addEventListener('touchstart', e=>{
-  if(e.touches.length===2){
-    pinchActive=true;
-    drawing=false; curPath=null; // cancel any active draw
-    pinchStartDist=getPinchDist(e);
-    pinchStartScale=scale;
-    e.preventDefault();e.stopPropagation();
-  }
-},{passive:false});
-
-ixC.addEventListener('touchmove', e=>{
-  if(pinchActive && e.touches.length===2){
-    e.preventDefault();e.stopPropagation();
-    const dist=getPinchDist(e);
-    const newScale=Math.min(4,Math.max(0.4,pinchStartScale*(dist/pinchStartDist)));
-    if(Math.abs(newScale-scale)>0.03){
-      scale=newScale;
-      document.getElementById('zLbl').textContent=Math.round(scale/1.5*100)+'%';
-      if(pdfDoc)renderPage(curPage);
-    }
-  }
-},{passive:false});
-
-ixC.addEventListener('touchend', e=>{
-  if(pinchActive){
-    if(e.touches.length<2) pinchActive=false;
-    e.preventDefault();
-    return;
-  }
-  if(placingSig && sigUrl){ handlePlaceTap(e); return; }
-  pUp(e);
-},{passive:false});
-
-// ── Download ──
 async function dlPDF(){
   if(!pdfRaw)return;setLoading(true,'Generando PDF…');
   try{
@@ -750,7 +578,6 @@ async function dlPDF(){
   setLoading(false);
 }
 
-// ── Utils ──
 function setLoading(v,msg=''){document.getElementById('loading').classList.toggle('on',v);if(msg)document.getElementById('ldmsg').textContent=msg;}
 let toastTmr;
 function toast(msg,type=''){
@@ -758,57 +585,23 @@ function toast(msg,type=''){
   clearTimeout(toastTmr);toastTmr=setTimeout(()=>{t.className=''},3500);
 }
 
-// ── PRO / Sin anuncios ──
-// Estado Pro: se guarda en localStorage
-// Cuando estés en Play Store, reemplaza checkProStatus() y purchasePro()
-// con llamadas a la API de Google Play Billing
-let isPro = localStorage.getItem('rubrica_pro') === '1';
-
+let isPro=localStorage.getItem('rubrica_pro')==='1';
 function applyProState(){
-  const banner = document.getElementById('ad-banner');
-  const proBtn = document.getElementById('proBtn');
-  const appEl  = document.getElementById('app');
-  if(isPro){
-    if(banner) banner.style.display='none';
-    appEl.style.paddingBottom='0';
-    if(proBtn){ proBtn.style.color='#f0c040'; proBtn.title='Rúbrica Pro activo ⭐'; }
-  }else{
-    if(banner) banner.style.display='flex';
-    appEl.style.paddingBottom='calc(50px + var(--safe-b))';
-  }
+  const banner=document.getElementById('ad-banner'),proBtn=document.getElementById('proBtn'),appEl=document.getElementById('app');
+  if(isPro){if(banner)banner.style.display='none';appEl.style.paddingBottom='0';if(proBtn)proBtn.title='Rúbrica Pro ⭐';}
+  else{if(banner)banner.style.display='flex';appEl.style.paddingBottom='calc(50px + var(--safe-b))';}
 }
-
-function openPro(){
-  if(isPro){ toast('⭐ Ya tienes Rúbrica Pro activo','ok'); return; }
-  const m=document.getElementById('proModal');
-  m.style.display='flex';
-}
-function closePro(){
-  document.getElementById('proModal').style.display='none';
-}
-
+function openPro(){if(isPro){toast('⭐ Ya tienes Rúbrica Pro','ok');return;}document.getElementById('proModal').style.display='flex';}
+function closePro(){document.getElementById('proModal').style.display='none';}
 function purchasePro(){
-  // ─────────────────────────────────────────────────────────
-  // CUANDO ESTÉS EN PLAY STORE:
-  // Reemplaza este bloque con Google Play Billing.
-  // SKU a crear en Play Console:
-  //   - Pago único: "pro_forever" → 1,99€
-  // ─────────────────────────────────────────────────────────
-  const ok = confirm('Comprar Rúbrica Pro — 1,99€ pago único\n\n(En Play Store aquí aparecería el diálogo de pago de Google)');
-  if(!ok) return;
-  localStorage.setItem('rubrica_pro','1');
-  isPro=true;
-  closePro();
-  applyProState();
-  toast('⭐ ¡Bienvenido a Rúbrica Pro! Anuncios eliminados','ok');
+  const ok=confirm('Comprar Rúbrica Pro — 1,99€ pago único\n\n(En Play Store aparecería el diálogo de pago de Google)');
+  if(!ok)return;
+  localStorage.setItem('rubrica_pro','1');isPro=true;closePro();applyProState();
+  toast('⭐ ¡Bienvenido a Rúbrica Pro!','ok');
 }
-
-// Aplicar estado al arrancar
 applyProState();
 
-// ── Service Worker ──
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW:',e));
-
 clearSigC();
 </script>
 </body>
