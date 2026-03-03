@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -274,8 +274,8 @@ async function loadFile(file){
   const reader=new FileReader();
   reader.onload=async ev=>{
     try{
-      pdfRaw=ev.target.result;
-      const task=pdfjsLib.getDocument({data:new Uint8Array(pdfRaw)});
+      pdfRaw=ev.target.result.slice(0); // copia persistente
+      const task=pdfjsLib.getDocument({data:new Uint8Array(ev.target.result)});
       task.onPassword=(updatePwd,reason)=>{
         setLoading(false);
         const msg=reason===1?'🔒 Introduce la contraseña:':'❌ Contraseña incorrecta:';
@@ -569,7 +569,8 @@ async function dlPDF(){
   if(!pdfRaw)return;setLoading(true,'Generando PDF…');
   try{
     const{PDFDocument}=PDFLib;
-    const doc=await PDFDocument.load(pdfRaw);
+    const rawCopy=pdfRaw.slice(0);
+    const doc=await PDFDocument.load(rawCopy);
     for(let pn=1;pn<=totPages;pn++){
       const pp=paths.filter(p=>p.page===pn);if(!pp.length)continue;
       const page=await pdfDoc.getPage(pn);
@@ -602,7 +603,9 @@ async function sharePDF(){
   setLoading(true,'Preparando…');
   try{
     const{PDFDocument}=PDFLib;
-    const doc=await PDFDocument.load(pdfRaw);
+    // Clonar el buffer para evitar "detached ArrayBuffer"
+    const rawCopy=pdfRaw.slice(0);
+    const doc=await PDFDocument.load(rawCopy);
     for(let pn=1;pn<=totPages;pn++){
       const pp=paths.filter(p=>p.page===pn);if(!pp.length)continue;
       const page=await pdfDoc.getPage(pn);
