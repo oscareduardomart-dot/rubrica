@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -501,10 +502,6 @@ function handlePlaceTap(e){
   const p = evXY(e);
   placeSig(p.x, p.y);
 }
-ixC.addEventListener('touchend', e => {
-  if(placingSig && sigUrl){ handlePlaceTap(e); return; }
-  pUp(e);
-}, {passive:false});
 ixC.addEventListener('mouseup', e => {
   if(placingSig && sigUrl){ handlePlaceTap(e); return; }
   pUp(e);
@@ -517,7 +514,6 @@ ixC.addEventListener('mouseleave', pUp);
 ixC.addEventListener('touchstart', pDown,{passive:false});
 ixC.addEventListener('touchmove',  pMove,{passive:false});
 ixC.addEventListener('touchcancel',pUp,  {passive:false});
-
 function pDown(e){
   if(!pdfDoc || placingSig) return;
   if(e.touches && e.touches.length===2) return; // dejar pinch al main
@@ -681,8 +677,8 @@ function doZoom(d){
   if(pdfDoc)renderPage(curPage);
 }
 
-// ── Pinch to zoom ──
-let pinchStartDist=0, pinchStartScale=1, pinchActive=false;
+// ── Pinch to zoom — attached to ixC so it catches all touches ──
+let pinchActive=false, pinchStartDist=0, pinchStartScale=1;
 
 function getPinchDist(e){
   const dx=e.touches[0].clientX-e.touches[1].clientX;
@@ -690,22 +686,22 @@ function getPinchDist(e){
   return Math.sqrt(dx*dx+dy*dy);
 }
 
-mainEl.addEventListener('touchstart', e=>{
+ixC.addEventListener('touchstart', e=>{
   if(e.touches.length===2){
     pinchActive=true;
+    drawing=false; curPath=null; // cancel any active draw
     pinchStartDist=getPinchDist(e);
     pinchStartScale=scale;
-    e.preventDefault();
+    e.preventDefault();e.stopPropagation();
   }
 },{passive:false});
 
-mainEl.addEventListener('touchmove', e=>{
+ixC.addEventListener('touchmove', e=>{
   if(pinchActive && e.touches.length===2){
-    e.preventDefault();
+    e.preventDefault();e.stopPropagation();
     const dist=getPinchDist(e);
-    const ratio=dist/pinchStartDist;
-    const newScale=Math.min(4,Math.max(0.4,pinchStartScale*ratio));
-    if(Math.abs(newScale-scale)>0.05){
+    const newScale=Math.min(4,Math.max(0.4,pinchStartScale*(dist/pinchStartDist)));
+    if(Math.abs(newScale-scale)>0.03){
       scale=newScale;
       document.getElementById('zLbl').textContent=Math.round(scale/1.5*100)+'%';
       if(pdfDoc)renderPage(curPage);
@@ -713,9 +709,15 @@ mainEl.addEventListener('touchmove', e=>{
   }
 },{passive:false});
 
-mainEl.addEventListener('touchend', e=>{
-  if(e.touches.length<2) pinchActive=false;
-},{passive:true});
+ixC.addEventListener('touchend', e=>{
+  if(pinchActive){
+    if(e.touches.length<2) pinchActive=false;
+    e.preventDefault();
+    return;
+  }
+  if(placingSig && sigUrl){ handlePlaceTap(e); return; }
+  pUp(e);
+},{passive:false});
 
 // ── Download ──
 async function dlPDF(){
