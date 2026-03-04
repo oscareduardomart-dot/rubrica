@@ -535,6 +535,7 @@ ixC.addEventListener('touchstart',function(e){
   if(!pdfDoc)return;
   e.preventDefault();
 
+  // Firma activa: gestionar drag/pinch ANTES de cualquier otra logica
   if(activeSig){
     if(e.touches.length===2){
       sigPinch=true;sigDrag=false;
@@ -547,6 +548,7 @@ ixC.addEventListener('touchstart',function(e){
     return;
   }
 
+  // Texto activo: gestionar drag/pinch ANTES de cualquier otra logica
   if(activeText){
     if(e.touches.length===2){
       txtPinch=true;txtDrag=false;
@@ -559,6 +561,7 @@ ixC.addEventListener('touchstart',function(e){
     return;
   }
 
+  // Colocar firma
   if(placingSig&&sigUrl&&e.touches.length===1){
     var p=evXY(e.touches[0]);
     activeSig={x:p.x-100,y:p.y-40,w:200,h:80,data:sigUrl};
@@ -568,12 +571,14 @@ ixC.addEventListener('touchstart',function(e){
     return;
   }
 
+  // Pinch zoom PDF (2 dedos, sin elementos activos)
   if(e.touches.length===2){
     pdfPinch=true;drawing=false;curPath=null;
     pdfPinchD0=tDist(e);pdfPinchZ0=cssZ;
     return;
   }
 
+  // Herramientas de dibujo (1 dedo)
   if(tool==='cursor')return;
   if(tool==='text'){addText(evXY(e.touches[0]));return;}
   ixC.style.touchAction='none';
@@ -731,9 +736,15 @@ function placeText(){
   var t=document.getElementById('textPreview').value.trim();
   if(!t){toast('Escribe algo primero','err');return;}
   closeTextM();
-  // Activar modo colocacion de texto
   activeText={text:t,color:color,font:curFont,size:curFontSize,
-    x:ixC.width/PR/2, y:ixC.height/PR/2, page:curPage};
+    x:ixC.width/PR/2, y:ixC.height/PR/2+curFontSize*scale, page:curPage};
+  // Cambiar a cursor para que los toques gestionen drag/pinch del texto
+  tool='cursor';
+  document.querySelectorAll('.tbtn[id^="t-"]').forEach(function(b){b.classList.remove('on')});
+  document.getElementById('t-cursor').classList.add('on');
+  document.querySelectorAll('.dbtn[id^="d-"]').forEach(function(b){b.classList.remove('on')});
+  document.getElementById('d-cursor').classList.add('on');
+  ixC.style.cursor='move';
   drawActiveText();
   document.getElementById('placeOverlay').classList.add('on');
   document.getElementById('placeMsg').textContent='Arrastra para mover - Pellizca para cambiar tamano';
@@ -1039,29 +1050,9 @@ function applyCrop(){
   out.width=dstW;out.height=dstH;
   var ctx=out.getContext('2d');
 
-  if(cvReady&&window.cv&&window.cv.Mat){
-    try{
-      var src=cv.imread(currentPhoto.canvas);
-      var srcM=cv.matFromArray(4,1,cv.CV_32FC2,[
-        srcPts[0].x,srcPts[0].y, srcPts[1].x,srcPts[1].y,
-        srcPts[2].x,srcPts[2].y, srcPts[3].x,srcPts[3].y
-      ]);
-      var dstM=cv.matFromArray(4,1,cv.CV_32FC2,[
-        0,0, dstW,0, dstW,dstH, 0,dstH
-      ]);
-      var M=cv.getPerspectiveTransform(srcM,dstM);
-      var warped=new cv.Mat();
-      cv.warpPerspective(src,warped,M,new cv.Size(dstW,dstH));
-      cv.imshow(out,warped);
-      src.delete();srcM.delete();dstM.delete();M.delete();warped.delete();
-    }catch(e){
-      console.warn('Warp error:',e);
-      // Fallback: recorte simple con canvas
-      simpleWarp(ctx,currentPhoto.canvas,srcPts,dstW,dstH);
-    }
-  }else{
-    simpleWarp(ctx,currentPhoto.canvas,srcPts,dstW,dstH);
-  }
+  // Siempre usar canvas nativo para preservar color original
+  // OpenCV solo se usa para detectar esquinas, NO para el warp
+  simpleWarp(ctx,currentPhoto.canvas,srcPts,dstW,dstH);
 
   scannedPages.push(out.toDataURL('image/jpeg',0.92));
   document.getElementById('cropM').classList.remove('open');
@@ -1074,12 +1065,37 @@ function dist(a,b){return Math.sqrt(Math.pow(a.x-b.x,2)+Math.pow(a.y-b.y,2));}
 
 // Warp perspectiva simple sin OpenCV (aproximado)
 function simpleWarp(ctx,srcCanvas,pts,dstW,dstH){
-  ctx.drawImage(srcCanvas,
-    Math.min(pts[0].x,pts[3].x), Math.min(pts[0].y,pts[1].y),
-    Math.max(pts[1].x,pts[2].x)-Math.min(pts[0].x,pts[3].x),
-    Math.max(pts[2].y,pts[3].y)-Math.min(pts[0].y,pts[1].y),
-    0,0,dstW,dstH
-  );
+  // Corrección de perspectiva via transformación de cuadrilátero
+  // Dividimos en 2 triangulos y usamos setTransform para cada franja
+  var steps=dstH;
+  for(var y=0;y<steps;y++){
+    var t=y/steps;
+    var t1=(y+1)/steps;
+    // Interpolación bilineal de los 4 puntos fuente
+    var sx0=pts[0].x+(pts[3].x-pts[0].x)*t,  sy0=pts[0].y+(pts[3].y-pts[0].y)*t;
+    var sx1=pts[1].x+(pts[2].x-pts[1].x)*t,  sy1=pts[1].y+(pts[2].y-pts[1].y)*t;
+    var sx0b=pts[0].x+(pts[3].x-pts[0].x)*t1, sy0b=pts[0].y+(pts[3].y-pts[0].y)*t1;
+    var sx1b=pts[1].x+(pts[2].x-pts[1].x)*t1, sy1b=pts[1].y+(pts[2].y-pts[1].y)*t1;
+
+    var dSliceH=Math.ceil(dstH/steps)+1;
+    var dSliceY=Math.round(t*dstH);
+
+    // Escala horizontal y skew para esta franja
+    var scaleX=(sx1-sx0)/dstW;
+    var skewX=(sx1b-sx0b)/dstW-scaleX;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0,dSliceY,dstW,dSliceH);
+    ctx.clip();
+    ctx.setTransform(
+      scaleX, (sy1-sy0)/dstW,
+      skewX,  dSliceH/srcCanvas.height*steps,
+      sx0,    sy0
+    );
+    ctx.drawImage(srcCanvas,0,0);
+    ctx.restore();
+  }
 }
 
 function buildScanPDF(){
