@@ -75,6 +75,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 #placeOverlay.on{display:block}
 #placeOverlay p{font-size:.8rem;font-weight:700;color:#fff;margin-bottom:8px}
 #confirmSigBtn{pointer-events:all;padding:9px 28px;border-radius:100px;border:none;background:var(--ok);color:#041a08;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;display:none;box-shadow:0 4px 16px rgba(61,214,140,.4)}
+#confirmTxtBtn{pointer-events:all;padding:9px 28px;border-radius:100px;border:none;background:#f0c040;color:#1a1000;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;display:none;box-shadow:0 4px 16px rgba(240,192,64,.4)}
 #sigM{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)}
 #sigM.open{display:flex}
 .ssheet{background:var(--s1);border:1px solid var(--brd);border-radius:22px 22px 0 0;padding:0 0 calc(var(--safe-b)+14px);width:100%;max-width:600px;display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.7);animation:su .28s cubic-bezier(.32,1,.32,1)}
@@ -212,6 +213,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 <div id="placeOverlay">
   <p id="placeMsg">Toca el PDF donde colocar la firma</p>
   <button id="confirmSigBtn" onclick="confirmPlaceSig()">Confirmar posicion</button>
+  <button id="confirmTxtBtn" onclick="confirmPlaceTxt()" style="display:none;margin-left:8px">Confirmar texto</button>
 </div>
 
 <div id="dock">
@@ -350,6 +352,9 @@ var tool='cursor',color='#1a1aff',strokeW=3;
 var drawing=false,curPath=null,paths=[];
 var sigUrl=null,sigCol='#111',placingSig=false,sigDraw=false;
 var activeSig=null;
+var activeText=null; // {x,y,text,color,font,size,page} texto en edicion
+var txtDrag=false,txtDragOX=0,txtDragOY=0;
+var txtPinch=false,txtPinchD0=0,txtPinchS0=0;
 var sigDrag=false,sigDragOX=0,sigDragOY=0;
 var sigPinch=false,sigPinchD0=0,sigPinchW0=0,sigPinchH0=0;
 var pdfPinch=false,pdfPinchD0=0,pdfPinchZ0=1;
@@ -423,7 +428,7 @@ function renderPage(n){
 }
 
 function setTool(t){
-  tool=t;placingSig=false;activeSig=null;
+  tool=t;placingSig=false;activeSig=null;activeText=null;
   document.querySelectorAll('.tbtn[id^="t-"]').forEach(function(b){b.classList.remove('on')});
   var el=document.getElementById('t-'+t);if(el)el.classList.add('on');
   document.querySelectorAll('.dbtn[id^="d-"]').forEach(function(b){b.classList.remove('on')});
@@ -492,6 +497,39 @@ function confirmPlaceSig(){
   toast('Firma colocada','ok');
 }
 
+function drawActiveText(){
+  if(!activeText)return;
+  redraw();
+  annX.save();
+  var fs=Math.round(activeText.size*scale);
+  annX.font=fs+'px '+activeText.font;
+  annX.fillStyle=activeText.color;
+  annX.fillText(activeText.text,activeText.x,activeText.y);
+  // Borde seleccion
+  var metrics=annX.measureText(activeText.text);
+  var tw=metrics.width, th=fs;
+  annX.strokeStyle='#f0c040';annX.lineWidth=2;annX.setLineDash([5,3]);
+  annX.strokeRect(activeText.x-2,activeText.y-th-2,tw+4,th+8);
+  annX.setLineDash([]);
+  // Esquinas
+  annX.fillStyle='#f0c040';
+  var cs=8;
+  [[activeText.x-2,activeText.y-th-2],[activeText.x+tw-cs+2,activeText.y-th-2],
+   [activeText.x-2,activeText.y+6-cs],[activeText.x+tw-cs+2,activeText.y+6-cs]]
+  .forEach(function(p){annX.fillRect(p[0],p[1],cs,cs)});
+  annX.restore();
+}
+
+function confirmPlaceTxt(){
+  if(!activeText)return;
+  paths.push({type:'text',color:activeText.color,x:activeText.x,y:activeText.y,
+    text:activeText.text,page:curPage,font:activeText.font,size:activeText.size});
+  activeText=null;redraw();
+  document.getElementById('placeOverlay').classList.remove('on');
+  document.getElementById('confirmTxtBtn').style.display='none';
+  toast('Texto colocado','ok');
+}
+
 // Touch handlers ixC - logica centralizada
 ixC.addEventListener('touchstart',function(e){
   if(!pdfDoc)return;
@@ -505,6 +543,18 @@ ixC.addEventListener('touchstart',function(e){
       sigDrag=true;sigPinch=false;
       var p=evXY(e.touches[0]);
       sigDragOX=p.x-activeSig.x;sigDragOY=p.y-activeSig.y;
+    }
+    return;
+  }
+
+  if(activeText){
+    if(e.touches.length===2){
+      txtPinch=true;txtDrag=false;
+      txtPinchD0=tDist(e);txtPinchS0=activeText.size;
+    }else{
+      txtDrag=true;txtPinch=false;
+      var p=evXY(e.touches[0]);
+      txtDragOX=p.x-activeText.x;txtDragOY=p.y-activeText.y;
     }
     return;
   }
@@ -549,6 +599,19 @@ ixC.addEventListener('touchmove',function(e){
     return;
   }
 
+  if(activeText){
+    if(txtPinch&&e.touches.length===2){
+      var ratio=tDist(e)/txtPinchD0;
+      activeText.size=Math.max(6,Math.min(200,Math.round(txtPinchS0*ratio)));
+      drawActiveText();
+    }else if(txtDrag&&e.touches.length>=1){
+      var p=evXY(e.touches[0]);
+      activeText.x=p.x-txtDragOX;activeText.y=p.y-txtDragOY;
+      drawActiveText();
+    }
+    return;
+  }
+
   if(pdfPinch&&e.touches.length===2){
     var nz=Math.min(5,Math.max(0.3,pdfPinchZ0*(tDist(e)/pdfPinchD0)));
     if(Math.abs(nz-cssZ)>0.01){
@@ -570,6 +633,11 @@ ixC.addEventListener('touchend',function(e){
     if(e.touches.length===0)sigDrag=false;
     return;
   }
+  if(activeText){
+    if(e.touches.length<2)txtPinch=false;
+    if(e.touches.length===0)txtDrag=false;
+    return;
+  }
   if(e.touches.length<2)pdfPinch=false;
   if(!drawing||!curPath)return;
   drawing=false;
@@ -580,6 +648,7 @@ ixC.addEventListener('touchend',function(e){
 ixC.addEventListener('mousedown',function(e){
   if(!pdfDoc)return;
   if(activeSig){sigDrag=true;var p=evXY(e);sigDragOX=p.x-activeSig.x;sigDragOY=p.y-activeSig.y;return;}
+  if(activeText){txtDrag=true;var p=evXY(e);txtDragOX=p.x-activeText.x;txtDragOY=p.y-activeText.y;return;}
   if(placingSig&&sigUrl){var p=evXY(e);activeSig={x:p.x-100,y:p.y-40,w:200,h:80,data:sigUrl};drawActiveSig();document.getElementById('confirmSigBtn').style.display='inline-block';return;}
   if(tool==='cursor')return;
   if(tool==='text'){addText(evXY(e));return;}
@@ -587,11 +656,12 @@ ixC.addEventListener('mousedown',function(e){
 });
 ixC.addEventListener('mousemove',function(e){
   if(activeSig&&sigDrag){var p=evXY(e);activeSig.x=p.x-sigDragOX;activeSig.y=p.y-sigDragOY;drawActiveSig();return;}
+  if(activeText&&txtDrag){var p=evXY(e);activeText.x=p.x-txtDragOX;activeText.y=p.y-txtDragOY;drawActiveText();return;}
   if(!drawing||!curPath)return;
   curPath.pts.push(evXY(e));ixX.clearRect(0,0,ixC.width,ixC.height);drawPath(ixX,curPath);
 });
 function endDraw(){
-  sigDrag=false;
+  sigDrag=false;txtDrag=false;
   if(!drawing||!curPath)return;
   drawing=false;
   if(curPath.pts.length>1){paths.push(Object.assign({},curPath,{pts:curPath.pts.slice()}));redraw();}
@@ -660,11 +730,15 @@ function closeTextM(){
 function placeText(){
   var t=document.getElementById('textPreview').value.trim();
   if(!t){toast('Escribe algo primero','err');return;}
-  if(!textPos){closeTextM();return;}
-  paths.push({type:'text',color:color,x:textPos.x,y:textPos.y,text:t,page:curPage,font:curFont,size:curFontSize});
-  redraw();
   closeTextM();
-  toast('Texto insertado','ok');
+  // Activar modo colocacion de texto
+  activeText={text:t,color:color,font:curFont,size:curFontSize,
+    x:ixC.width/PR/2, y:ixC.height/PR/2, page:curPage};
+  drawActiveText();
+  document.getElementById('placeOverlay').classList.add('on');
+  document.getElementById('placeMsg').textContent='Arrastra para mover - Pellizca para cambiar tamano';
+  document.getElementById('confirmTxtBtn').style.display='inline-block';
+  document.getElementById('confirmSigBtn').style.display='none';
 }
 function undo(){
   var idx=paths.reduce(function(a,p,i){return p.page===curPage?a.concat([i]):a},[]);
@@ -978,18 +1052,8 @@ function applyCrop(){
       var M=cv.getPerspectiveTransform(srcM,dstM);
       var warped=new cv.Mat();
       cv.warpPerspective(src,warped,M,new cv.Size(dstW,dstH));
-
-      // Filtro documento: mejorar contraste
-      var gray=new cv.Mat();
-      cv.cvtColor(warped,gray,cv.COLOR_RGBA2GRAY);
-      cv.adaptiveThreshold(gray,gray,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,21,10);
-
-      // Convertir de vuelta a RGBA para canvas
-      var rgba=new cv.Mat();
-      cv.cvtColor(gray,rgba,cv.COLOR_GRAY2RGBA);
-      cv.imshow(out,rgba);
-
-      src.delete();srcM.delete();dstM.delete();M.delete();warped.delete();gray.delete();rgba.delete();
+      cv.imshow(out,warped);
+      src.delete();srcM.delete();dstM.delete();M.delete();warped.delete();
     }catch(e){
       console.warn('Warp error:',e);
       // Fallback: recorte simple con canvas
@@ -1010,22 +1074,12 @@ function dist(a,b){return Math.sqrt(Math.pow(a.x-b.x,2)+Math.pow(a.y-b.y,2));}
 
 // Warp perspectiva simple sin OpenCV (aproximado)
 function simpleWarp(ctx,srcCanvas,pts,dstW,dstH){
-  // Dibujar la imagen recortada (proyeccion bilineal simplificada)
   ctx.drawImage(srcCanvas,
     Math.min(pts[0].x,pts[3].x), Math.min(pts[0].y,pts[1].y),
     Math.max(pts[1].x,pts[2].x)-Math.min(pts[0].x,pts[3].x),
     Math.max(pts[2].y,pts[3].y)-Math.min(pts[0].y,pts[1].y),
     0,0,dstW,dstH
   );
-  // Aplicar filtro contraste
-  var imgd=ctx.getImageData(0,0,dstW,dstH);
-  var d=imgd.data;
-  for(var i=0;i<d.length;i+=4){
-    var v=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114);
-    v=v>128?255:0; // umbral simple
-    d[i]=d[i+1]=d[i+2]=v;
-  }
-  ctx.putImageData(imgd,0,0);
 }
 
 function buildScanPDF(){
@@ -1194,4 +1248,3 @@ clearSigC();
 </script>
 </body>
 </html>
-
