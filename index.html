@@ -93,13 +93,34 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 #scanM{display:none;position:fixed;inset:0;background:#000;z-index:250;flex-direction:column}
 #scanM.open{display:flex}
 #scanVideo{width:100%;flex:1;object-fit:cover}
-#scanControls{padding:12px 16px calc(12px + var(--safe-b));background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
-#scanCaptures{display:flex;gap:8px;overflow-x:auto;flex:1}
-.scan-thumb{width:48px;height:64px;object-fit:cover;border-radius:6px;border:2px solid var(--brd);flex-shrink:0;cursor:pointer}
-#scanShot{width:60px;height:60px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.15);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#scanBar{padding:12px 16px calc(12px + var(--safe-b));background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+#scanShot{width:64px;height:64px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.15);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 #scanShot:active{transform:scale(.9)}
-#scanDone{padding:10px 18px;border-radius:100px;border:none;background:var(--acc);color:#fff;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;flex-shrink:0}
 #scanClose{position:absolute;top:calc(var(--safe-t)+12px);left:14px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.5);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#scanHint{font-size:.75rem;color:rgba(255,255,255,.7);font-family:'DM Mono',monospace;text-align:center;flex:1}
+#cropM{display:none;position:fixed;inset:0;background:#000;z-index:260;flex-direction:column;align-items:center;justify-content:center}
+#cropM.open{display:flex}
+#cropWrap{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#cropCanvas{max-width:100%;max-height:100%;display:block}
+#cropSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.crop-pt{width:28px;height:28px;border-radius:50%;background:var(--acc);border:3px solid #fff;position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;box-shadow:0 2px 10px rgba(0,0,0,.5);z-index:10}
+#cropBar{padding:14px 20px calc(14px + var(--safe-b));background:rgba(0,0,0,.9);display:flex;flex-direction:column;gap:8px;flex-shrink:0;width:100%}
+.cropBtns{display:flex;gap:10px}
+.crop-btn{flex:1;padding:13px;border-radius:11px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer}
+.crop-btn.p{background:linear-gradient(130deg,var(--acc),#8b8ff8);border-color:transparent;color:#fff}
+#cropInfo{font-size:.7rem;color:var(--mut);font-family:'DM Mono',monospace;text-align:center}
+/* Modal texto */
+#textM{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)}
+#textM.open{display:flex}
+#textPreview{width:100%;min-height:52px;background:var(--s3);border:1px solid var(--brd);border-radius:10px;padding:10px 14px;color:var(--txt);font-size:1rem;outline:none;resize:none;font-family:'Arial',sans-serif;line-height:1.4;margin-bottom:4px}
+.font-opts{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+.font-opts::-webkit-scrollbar{display:none}
+.font-pill{padding:7px 14px;border-radius:100px;border:1px solid var(--brd);background:var(--s2);color:var(--mut);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.font-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.size-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.size-row span{font-size:.78rem;color:var(--mut);min-width:32px;font-family:'DM Mono',monospace}
+#fontSizeSlider{-webkit-appearance:none;flex:1;height:4px;border-radius:2px;background:var(--brd);outline:none;cursor:pointer}
+#fontSizeSlider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc);cursor:pointer;border:2px solid var(--s1)}
 #toast{position:fixed;bottom:calc(var(--safe-b)+70px);left:50%;transform:translateX(-50%) translateY(70px);background:var(--s1);border:1px solid var(--brd);color:var(--txt);padding:9px 20px;border-radius:100px;font-size:.8rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:500;pointer-events:none;white-space:nowrap}
 #toast.ok{background:var(--ok);color:#041a08;border-color:transparent}
 #toast.err{background:var(--acc2);color:#fff;border-color:transparent}
@@ -229,14 +250,60 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 
 <div id="scanM">
   <video id="scanVideo" autoplay playsinline muted></video>
-  <div id="scanControls">
-    <div id="scanCaptures"></div>
+  <div id="scanBar">
+    <span id="scanHint">Centra el documento y dispara</span>
     <button id="scanShot" onclick="takeShot()">
       <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><circle cx="12" cy="12" r="6"/></svg>
     </button>
-    <button id="scanDone" onclick="buildScanPDF()">Crear PDF</button>
   </div>
   <button id="scanClose" onclick="closeScanner()">X</button>
+</div>
+
+<!-- Editor recorte / perspectiva -->
+<div id="cropM">
+  <div id="cropWrap">
+    <canvas id="cropCanvas"></canvas>
+    <svg id="cropSvg"></svg>
+    <div class="crop-pt" id="pt0"></div>
+    <div class="crop-pt" id="pt1"></div>
+    <div class="crop-pt" id="pt2"></div>
+    <div class="crop-pt" id="pt3"></div>
+  </div>
+  <div id="cropBar">
+    <span id="cropInfo">Ajusta las esquinas del documento</span>
+    <div class="cropBtns">
+      <button class="crop-btn" onclick="rejectCrop()">Repetir foto</button>
+      <button class="crop-btn p" onclick="applyCrop()">Aplicar recorte</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal texto -->
+<div id="textM">
+  <div class="ssheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">Insertar texto</span><button class="shclose" onclick="closeTextM()">X</button></div>
+    <div style="padding:12px 16px 0">
+      <textarea id="textPreview" rows="2" placeholder="Escribe aqui..."></textarea>
+      <div class="size-row">
+        <span id="fontSizeLbl">16px</span>
+        <input type="range" id="fontSizeSlider" min="8" max="72" value="16">
+      </div>
+      <div class="font-opts" id="fontOpts">
+        <button class="font-pill on" data-f="Arial" onclick="setFont(this)">Arial</button>
+        <button class="font-pill" data-f="Georgia" onclick="setFont(this)" style="font-family:Georgia">Georgia</button>
+        <button class="font-pill" data-f="'Courier New'" onclick="setFont(this)" style="font-family:'Courier New'">Courier</button>
+        <button class="font-pill" data-f="'Times New Roman'" onclick="setFont(this)" style="font-family:'Times New Roman'">Times</button>
+        <button class="font-pill" data-f="Verdana" onclick="setFont(this)" style="font-family:Verdana">Verdana</button>
+        <button class="font-pill" data-f="Impact" onclick="setFont(this)" style="font-family:Impact">Impact</button>
+        <button class="font-pill" data-f="'Comic Sans MS'" onclick="setFont(this)" style="font-family:'Comic Sans MS'">Comic</button>
+      </div>
+    </div>
+    <div class="shact">
+      <button class="shbtn" onclick="closeTextM()">Cancelar</button>
+      <button class="shbtn p" onclick="placeText()">Insertar</button>
+    </div>
+  </div>
 </div>
 
 <div id="proModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
@@ -552,12 +619,53 @@ function redraw(){
   annX.clearRect(0,0,annC.width,annC.height);
   paths.filter(function(p){return p.page===curPage}).forEach(function(p){
     if(p.type==='sig'){var img=new Image();img.onload=function(){annX.drawImage(img,p.x,p.y,p.w,p.h)};img.src=p.data;}
-    else if(p.type==='text'){annX.save();annX.font=Math.round(14*scale)+'px Arial';annX.fillStyle=p.color;annX.fillText(p.text,p.x,p.y);annX.restore();}
+    else if(p.type==='text'){annX.save();annX.font=(p.size||14)*scale+'px '+(p.font||'Arial');annX.fillStyle=p.color;annX.fillText(p.text,p.x,p.y);annX.restore();}
     else drawPath(annX,p);
   });
 }
 
-function addText(pos){var t=prompt('Escribe el texto:');if(!t)return;paths.push({type:'text',color:color,x:pos.x,y:pos.y,text:t,page:curPage});redraw();}
+// ── Modal texto ──
+var textPos=null;
+var curFont='Arial';
+var curFontSize=16;
+
+document.getElementById('fontSizeSlider').oninput=function(){
+  curFontSize=+this.value;
+  document.getElementById('fontSizeLbl').textContent=curFontSize+'px';
+  document.getElementById('textPreview').style.fontSize=curFontSize+'px';
+};
+
+function setFont(el){
+  curFont=el.dataset.f;
+  document.querySelectorAll('.font-pill').forEach(function(e){e.classList.remove('on')});
+  el.classList.add('on');
+  document.getElementById('textPreview').style.fontFamily=curFont;
+}
+
+function addText(pos){
+  if(!pdfDoc)return;
+  textPos=pos;
+  document.getElementById('textPreview').value='';
+  document.getElementById('textPreview').style.fontSize=curFontSize+'px';
+  document.getElementById('textPreview').style.fontFamily=curFont;
+  document.getElementById('textM').classList.add('open');
+  setTimeout(function(){document.getElementById('textPreview').focus()},200);
+}
+
+function closeTextM(){
+  document.getElementById('textM').classList.remove('open');
+  textPos=null;
+}
+
+function placeText(){
+  var t=document.getElementById('textPreview').value.trim();
+  if(!t){toast('Escribe algo primero','err');return;}
+  if(!textPos){closeTextM();return;}
+  paths.push({type:'text',color:color,x:textPos.x,y:textPos.y,text:t,page:curPage,font:curFont,size:curFontSize});
+  redraw();
+  closeTextM();
+  toast('Texto insertado','ok');
+}
 function undo(){
   var idx=paths.reduce(function(a,p,i){return p.page===curPage?a.concat([i]):a},[]);
   if(idx.length){paths.splice(idx[idx.length-1],1);redraw();toast('Deshecho')}
@@ -628,48 +736,306 @@ function goPage(d){
   renderPage(n).then(function(){setLoading(false);mainEl.scrollTo(0,0);});
 }
 
-// Escaner
-var scanStream=null,scanPhotos=[];
+// ============================================================
+// ESCANER CON DETECCION DE BORDES (OpenCV.js)
+// ============================================================
+var scanStream=null;
+var currentPhoto=null; // {canvas, dataUrl} foto recien tomada
+var scannedPages=[]; // paginas ya procesadas (dataUrl JPEG)
+var cvReady=false;
+var cropPoints=[]; // [{x,y}] en coords del cropCanvas
+var cropImgW=0,cropImgH=0; // tamanyo imagen en el canvas
+var cropDispW=0,cropDispH=0; // tamanyo canvas en pantalla
+
+// Cargar OpenCV.js de forma diferida (solo cuando se necesita)
+function ensureCV(){
+  return new Promise(function(resolve){
+    if(cvReady){resolve();return;}
+    if(window.cv&&window.cv.Mat){cvReady=true;resolve();return;}
+    var s=document.createElement('script');
+    s.src='https://docs.opencv.org/4.8.0/opencv.js';
+    s.async=true;
+    s.onload=function(){
+      // cv puede necesitar tiempo para inicializar
+      var tries=0;
+      var t=setInterval(function(){
+        tries++;
+        if(window.cv&&window.cv.Mat){clearInterval(t);cvReady=true;resolve();}
+        if(tries>60){clearInterval(t);resolve();} // timeout 6s
+      },100);
+    };
+    document.head.appendChild(s);
+  });
+}
+
 function openScanner(){
   if(!isPro&&getUsos()>=USOS_GRATIS){openPro(true);return;}
-  scanPhotos=[];
-  document.getElementById('scanCaptures').innerHTML='';
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false})
-  .then(function(stream){
+  scannedPages=[];
+  document.getElementById('scanM').classList.add('open');
+  navigator.mediaDevices.getUserMedia({
+    video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false
+  }).then(function(stream){
     scanStream=stream;
     document.getElementById('scanVideo').srcObject=stream;
-    document.getElementById('scanM').classList.add('open');
+    // Precargar OpenCV en segundo plano
+    ensureCV();
   }).catch(function(){toast('No se puede acceder a la camara','err');});
 }
+
 function closeScanner(){
   if(scanStream)scanStream.getTracks().forEach(function(t){t.stop()});
   scanStream=null;
   document.getElementById('scanM').classList.remove('open');
+  // Si hay paginas escaneadas, crear el PDF
+  if(scannedPages.length>0){
+    buildScanPDF();
+  }
 }
+
 function takeShot(){
   var video=document.getElementById('scanVideo');
   var c=document.createElement('canvas');
   c.width=video.videoWidth;c.height=video.videoHeight;
   c.getContext('2d').drawImage(video,0,0);
-  var dataUrl=c.toDataURL('image/jpeg',0.92);
-  scanPhotos.push(dataUrl);
-  var img=document.createElement('img');
-  img.src=dataUrl;img.className='scan-thumb';
-  img.onclick=function(){var idx=scanPhotos.indexOf(dataUrl);if(idx>-1){scanPhotos.splice(idx,1);img.remove();}};
-  document.getElementById('scanCaptures').appendChild(img);
+
+  // Flash visual
   var fl=document.createElement('div');
-  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.5;z-index:999;pointer-events:none';
-  document.body.appendChild(fl);setTimeout(function(){fl.remove()},100);
-  toast('Foto '+scanPhotos.length,'ok');
+  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.6;z-index:999;pointer-events:none';
+  document.body.appendChild(fl);setTimeout(function(){fl.remove()},120);
+
+  currentPhoto={canvas:c, dataUrl:c.toDataURL('image/jpeg',0.95)};
+  // Ocultar camara y mostrar editor de recorte
+  document.getElementById('scanM').classList.remove('open');
+  openCropEditor(c);
 }
+
+// ── Editor de recorte con deteccion OpenCV ──
+function openCropEditor(photoCanvas){
+  var cvm=document.getElementById('cropM');
+  var cropC=document.getElementById('cropCanvas');
+  var wrap=document.getElementById('cropWrap');
+
+  // Dibujar foto en cropCanvas ajustada a pantalla
+  var maxW=window.innerWidth;
+  var maxH=window.innerHeight-130; // espacio para barra inferior
+  var ratio=Math.min(maxW/photoCanvas.width, maxH/photoCanvas.height);
+  cropDispW=Math.round(photoCanvas.width*ratio);
+  cropDispH=Math.round(photoCanvas.height*ratio);
+  cropImgW=photoCanvas.width;
+  cropImgH=photoCanvas.height;
+
+  cropC.width=cropDispW;cropC.height=cropDispH;
+  cropC.style.width=cropDispW+'px';cropC.style.height=cropDispH+'px';
+  cropC.getContext('2d').drawImage(photoCanvas,0,0,cropDispW,cropDispH);
+
+  document.getElementById('cropInfo').textContent='Cargando deteccion...';
+  cvm.classList.add('open');
+
+  // Intentar deteccion con OpenCV, si no usar esquinas por defecto
+  ensureCV().then(function(){
+    var pts=detectDocumentCorners(photoCanvas);
+    // Convertir coords imagen a coords pantalla
+    cropPoints=pts.map(function(p){
+      return{x:Math.round(p.x*ratio), y:Math.round(p.y*ratio)};
+    });
+    updateCropUI();
+    document.getElementById('cropInfo').textContent='Ajusta las esquinas si es necesario';
+  });
+}
+
+function detectDocumentCorners(canvas){
+  // Corners por defecto (margen 8%)
+  var w=canvas.width,h=canvas.height;
+  var mx=Math.round(w*0.08),my=Math.round(h*0.08);
+  var def=[{x:mx,y:my},{x:w-mx,y:my},{x:w-mx,y:h-my},{x:mx,y:h-my}];
+
+  if(!cvReady||!window.cv||!window.cv.Mat) return def;
+
+  try{
+    var src=cv.imread(canvas);
+    var gray=new cv.Mat();
+    var blur=new cv.Mat();
+    var edges=new cv.Mat();
+    var hierarchy=new cv.Mat();
+    var contours=new cv.MatVector();
+
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+    cv.Canny(blur,edges,50,150);
+
+    // Dilatar bordes para cerrar gaps
+    var kernel=cv.Mat.ones(3,3,cv.CV_8U);
+    cv.dilate(edges,edges,kernel);
+    kernel.delete();
+
+    cv.findContours(edges,contours,hierarchy,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+
+    var best=null;var bestArea=0;
+    for(var i=0;i<contours.size();i++){
+      var cnt=contours.get(i);
+      var area=cv.contourArea(cnt);
+      var peri=cv.arcLength(cnt,true);
+      var approx=new cv.Mat();
+      cv.approxPolyDP(cnt,approx,0.02*peri,true);
+      if(approx.rows===4&&area>bestArea&&area>w*h*0.1){
+        bestArea=area;
+        best=[];
+        for(var r=0;r<4;r++){
+          best.push({x:approx.data32S[r*2],y:approx.data32S[r*2+1]});
+        }
+      }
+      approx.delete();cnt.delete();
+    }
+
+    src.delete();gray.delete();blur.delete();edges.delete();
+    hierarchy.delete();contours.delete();
+
+    if(best){
+      // Ordenar: TL, TR, BR, BL
+      best.sort(function(a,b){return a.y-b.y});
+      var top=best.slice(0,2).sort(function(a,b){return a.x-b.x});
+      var bot=best.slice(2,4).sort(function(a,b){return a.x-b.x});
+      return[top[0],top[1],bot[1],bot[0]];
+    }
+  }catch(e){console.warn('OpenCV error:',e);}
+
+  return def;
+}
+
+function updateCropUI(){
+  var svg=document.getElementById('cropSvg');
+  var pts=cropPoints;
+  // Linea del poligono
+  var poly='M'+pts.map(function(p){return p.x+','+p.y}).join('L')+'Z';
+  svg.innerHTML='<path d="'+poly+'" fill="rgba(91,95,239,0.2)" stroke="#5b5fef" stroke-width="2"/>';
+
+  // Mover puntos visuales
+  ['pt0','pt1','pt2','pt3'].forEach(function(id,i){
+    var el=document.getElementById(id);
+    el.style.left=pts[i].x+'px';
+    el.style.top=pts[i].y+'px';
+    makeCropPointDraggable(el,i);
+  });
+}
+
+function makeCropPointDraggable(el,idx){
+  el.onmousedown=function(e){startDragCropPt(e.clientX,e.clientY,idx)};
+  el.ontouchstart=function(e){e.preventDefault();startDragCropPt(e.touches[0].clientX,e.touches[0].clientY,idx)};
+}
+
+var draggingPt=-1,dragStartX=0,dragStartY=0,ptStartX=0,ptStartY=0;
+function startDragCropPt(cx,cy,idx){
+  draggingPt=idx;dragStartX=cx;dragStartY=cy;
+  ptStartX=cropPoints[idx].x;ptStartY=cropPoints[idx].y;
+  function onMove(e){
+    var tx=e.touches?e.touches[0].clientX:e.clientX;
+    var ty=e.touches?e.touches[0].clientY:e.clientY;
+    cropPoints[draggingPt].x=Math.max(0,Math.min(cropDispW,ptStartX+(tx-dragStartX)));
+    cropPoints[draggingPt].y=Math.max(0,Math.min(cropDispH,ptStartY+(ty-dragStartY)));
+    updateCropUI();
+  }
+  function onUp(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onUp);}
+  document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onUp);
+}
+
+function rejectCrop(){
+  document.getElementById('cropM').classList.remove('open');
+  document.getElementById('scanM').classList.add('open');
+  currentPhoto=null;
+}
+
+function applyCrop(){
+  if(!currentPhoto)return;
+  document.getElementById('cropInfo').textContent='Procesando...';
+
+  // Convertir puntos pantalla -> coords imagen original
+  var rX=cropImgW/cropDispW, rY=cropImgH/cropDispH;
+  var srcPts=cropPoints.map(function(p){return{x:Math.round(p.x*rX),y:Math.round(p.y*rY)}});
+
+  // Calcular dimensiones del doc resultante
+  var wTop=dist(srcPts[0],srcPts[1]);
+  var wBot=dist(srcPts[3],srcPts[2]);
+  var hLeft=dist(srcPts[0],srcPts[3]);
+  var hRight=dist(srcPts[1],srcPts[2]);
+  var dstW=Math.round(Math.max(wTop,wBot));
+  var dstH=Math.round(Math.max(hLeft,hRight));
+
+  var out=document.createElement('canvas');
+  out.width=dstW;out.height=dstH;
+  var ctx=out.getContext('2d');
+
+  if(cvReady&&window.cv&&window.cv.Mat){
+    try{
+      var src=cv.imread(currentPhoto.canvas);
+      var srcM=cv.matFromArray(4,1,cv.CV_32FC2,[
+        srcPts[0].x,srcPts[0].y, srcPts[1].x,srcPts[1].y,
+        srcPts[2].x,srcPts[2].y, srcPts[3].x,srcPts[3].y
+      ]);
+      var dstM=cv.matFromArray(4,1,cv.CV_32FC2,[
+        0,0, dstW,0, dstW,dstH, 0,dstH
+      ]);
+      var M=cv.getPerspectiveTransform(srcM,dstM);
+      var warped=new cv.Mat();
+      cv.warpPerspective(src,warped,M,new cv.Size(dstW,dstH));
+
+      // Filtro documento: mejorar contraste
+      var gray=new cv.Mat();
+      cv.cvtColor(warped,gray,cv.COLOR_RGBA2GRAY);
+      cv.adaptiveThreshold(gray,gray,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,21,10);
+
+      // Convertir de vuelta a RGBA para canvas
+      var rgba=new cv.Mat();
+      cv.cvtColor(gray,rgba,cv.COLOR_GRAY2RGBA);
+      cv.imshow(out,rgba);
+
+      src.delete();srcM.delete();dstM.delete();M.delete();warped.delete();gray.delete();rgba.delete();
+    }catch(e){
+      console.warn('Warp error:',e);
+      // Fallback: recorte simple con canvas
+      simpleWarp(ctx,currentPhoto.canvas,srcPts,dstW,dstH);
+    }
+  }else{
+    simpleWarp(ctx,currentPhoto.canvas,srcPts,dstW,dstH);
+  }
+
+  scannedPages.push(out.toDataURL('image/jpeg',0.92));
+  document.getElementById('cropM').classList.remove('open');
+  document.getElementById('scanM').classList.add('open');
+  document.getElementById('scanHint').textContent='Pagina '+scannedPages.length+' lista - Dispara otra o cierra para crear PDF';
+  currentPhoto=null;
+}
+
+function dist(a,b){return Math.sqrt(Math.pow(a.x-b.x,2)+Math.pow(a.y-b.y,2));}
+
+// Warp perspectiva simple sin OpenCV (aproximado)
+function simpleWarp(ctx,srcCanvas,pts,dstW,dstH){
+  // Dibujar la imagen recortada (proyeccion bilineal simplificada)
+  ctx.drawImage(srcCanvas,
+    Math.min(pts[0].x,pts[3].x), Math.min(pts[0].y,pts[1].y),
+    Math.max(pts[1].x,pts[2].x)-Math.min(pts[0].x,pts[3].x),
+    Math.max(pts[2].y,pts[3].y)-Math.min(pts[0].y,pts[1].y),
+    0,0,dstW,dstH
+  );
+  // Aplicar filtro contraste
+  var imgd=ctx.getImageData(0,0,dstW,dstH);
+  var d=imgd.data;
+  for(var i=0;i<d.length;i+=4){
+    var v=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114);
+    v=v>128?255:0; // umbral simple
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(imgd,0,0);
+}
+
 function buildScanPDF(){
-  if(!scanPhotos.length){toast('Haz al menos una foto','err');return;}
+  if(!scannedPages.length){return;}
   setLoading(true,'Creando PDF...');
   var doc;
   PDFLib.PDFDocument.create().then(function(d){
     doc=d;
     var chain=Promise.resolve();
-    scanPhotos.forEach(function(dataUrl){
+    scannedPages.forEach(function(dataUrl){
       chain=chain.then(function(){
         return fetch(dataUrl).then(function(r){return r.arrayBuffer()}).then(function(bytes){
           return doc.embedJpg(bytes);
@@ -684,10 +1050,9 @@ function buildScanPDF(){
   }).then(function(){
     return doc.save();
   }).then(function(out){
-    closeScanner();
+    scannedPages=[];
     pdfRaw=out.buffer.slice(0);
-    var task=pdfjsLib.getDocument({data:new Uint8Array(out)});
-    return task.promise;
+    return pdfjsLib.getDocument({data:new Uint8Array(out)}).promise;
   }).then(function(d){
     pdfDoc=d;totPages=d.numPages;curPage=1;paths=[];activeSig=null;
     return pdfDoc.getPage(1);
@@ -701,7 +1066,8 @@ function buildScanPDF(){
     document.getElementById('dock').classList.add('show');
     updateNav();return renderPage(1);
   }).then(function(){
-    toast('PDF creado con '+scanPhotos.length+' foto'+(scanPhotos.length>1?'s':''),'ok');
+    var n=scannedPages.length||totPages;
+    toast('PDF escaneado listo - '+totPages+' pagina'+(totPages>1?'s':''),'ok');
     setLoading(false);
   }).catch(function(err){toast('Error: '+err.message,'err');setLoading(false);});
 }
@@ -726,7 +1092,7 @@ function buildAnnotatedPDF(){
                 if(p.type==='sig'){
                   return new Promise(function(r){var i=new Image();i.onload=function(){tx.drawImage(i,p.x,p.y,p.w,p.h);r()};i.src=p.data});
                 }else if(p.type==='text'){
-                  tx.font=Math.round(14*scale)+'px Arial';tx.fillStyle=p.color;tx.fillText(p.text,p.x,p.y);
+                  tx.font=Math.round((p.size||14)*scale)+'px '+(p.font||'Arial');tx.fillStyle=p.color;tx.fillText(p.text,p.x,p.y);
                 }else drawPath(tx,p);
               });
             });
@@ -828,3 +1194,4 @@ clearSigC();
 </script>
 </body>
 </html>
+
