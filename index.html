@@ -101,12 +101,12 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 #scanShot:active{transform:scale(.9)}
 #scanClose{position:absolute;top:calc(var(--safe-t)+12px);left:14px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.5);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #scanHint{font-size:.75rem;color:rgba(255,255,255,.7);font-family:'DM Mono',monospace;text-align:center;flex:1}
-#cropM{display:none;position:fixed;inset:0;background:#000;z-index:260;flex-direction:column;align-items:center;justify-content:center}
+#cropM{display:none;position:fixed;inset:0;background:#000;z-index:260;flex-direction:column}
 #cropM.open{display:flex}
-#cropWrap{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
-#cropCanvas{max-width:100%;max-height:100%;display:block}
-#cropSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-.crop-pt{width:28px;height:28px;border-radius:50%;background:var(--acc);border:3px solid #fff;position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;box-shadow:0 2px 10px rgba(0,0,0,.5);z-index:10}
+#cropWrap{position:relative;flex:1;width:100%;overflow:hidden;background:#111;display:flex;align-items:center;justify-content:center}
+#cropCanvas{display:block;max-width:100%;max-height:100%}
+#cropOverlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.crop-pt{width:32px;height:32px;border-radius:50%;background:var(--acc);border:3px solid #fff;position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;box-shadow:0 2px 12px rgba(0,0,0,.6);z-index:10}
 #cropBar{padding:14px 20px calc(14px + var(--safe-b));background:rgba(0,0,0,.9);display:flex;flex-direction:column;gap:8px;flex-shrink:0;width:100%}
 .cropBtns{display:flex;gap:10px}
 .crop-btn{flex:1;padding:13px;border-radius:11px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer}
@@ -466,7 +466,7 @@ body.present #presentHint{display:flex}
 <div id="cropM">
   <div id="cropWrap">
     <canvas id="cropCanvas"></canvas>
-    <svg id="cropSvg"></svg>
+    <svg id="cropOverlay" style="position:absolute;top:0;left:0;pointer-events:none;z-index:2"></svg>
     <div class="crop-pt" id="pt0"></div>
     <div class="crop-pt" id="pt1"></div>
     <div class="crop-pt" id="pt2"></div>
@@ -1215,64 +1215,107 @@ function closeScanner(){
 
 function takeShot(){
   var video=document.getElementById('scanVideo');
-  // Esperar a que el video tenga dimensiones reales
+
   if(!video.videoWidth||!video.videoHeight){
-    toast('Camara iniciando, espera un momento...','err');
+    toast('Camara iniciando, espera...','err');
     return;
   }
-  var c=document.createElement('canvas');
-  c.width=video.videoWidth;c.height=video.videoHeight;
-  var ctx=c.getContext('2d');
-  ctx.drawImage(video,0,0,c.width,c.height);
-  // Verificar que la captura tiene contenido
-  var px=ctx.getImageData(0,0,10,10).data;
-  var blank=true;
-  for(var i=0;i<px.length;i+=4){if(px[i+3]>0){blank=false;break;}}
-  if(blank){toast('Error al capturar, reintenta','err');return;}
 
   // Flash visual
   var fl=document.createElement('div');
-  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.6;z-index:999;pointer-events:none';
-  document.body.appendChild(fl);setTimeout(function(){fl.remove()},120);
+  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.7;z-index:9999;pointer-events:none;transition:opacity .15s';
+  document.body.appendChild(fl);
+  setTimeout(function(){fl.style.opacity='0';setTimeout(function(){fl.remove();},150);},80);
 
-  currentPhoto={canvas:c, dataUrl:c.toDataURL('image/jpeg',0.95)};
-  // Ocultar camara y mostrar editor de recorte
+  // Capturar frame del video en canvas temporal
+  var c=document.createElement('canvas');
+  c.width=video.videoWidth;
+  c.height=video.videoHeight;
+  var ctx=c.getContext('2d');
+  ctx.drawImage(video,0,0,c.width,c.height);
+
+  currentPhoto={canvas:c};
+
+  // Ocultar camara ANTES de abrir editor
   document.getElementById('scanM').classList.remove('open');
-  openCropEditor(c);
+
+  // Pequeña pausa para que el DOM se actualice antes de manipular canvas
+  setTimeout(function(){
+    openCropEditor(c);
+  },60);
 }
 
-// ── Editor de recorte con deteccion OpenCV ──
 function openCropEditor(photoCanvas){
   var cvm=document.getElementById('cropM');
   var cropC=document.getElementById('cropCanvas');
-  var wrap=document.getElementById('cropWrap');
 
-  // Dibujar foto en cropCanvas ajustada a pantalla
-  var maxW=window.innerWidth;
-  var maxH=window.innerHeight-130; // espacio para barra inferior
-  var ratio=Math.min(maxW/photoCanvas.width, maxH/photoCanvas.height);
-  cropDispW=Math.round(photoCanvas.width*ratio);
-  cropDispH=Math.round(photoCanvas.height*ratio);
-  cropImgW=photoCanvas.width;
-  cropImgH=photoCanvas.height;
-
-  cropC.width=cropDispW;cropC.height=cropDispH;
-  cropC.style.width=cropDispW+'px';cropC.style.height=cropDispH+'px';
-  cropC.getContext('2d').drawImage(photoCanvas,0,0,cropDispW,cropDispH);
-
-  document.getElementById('cropInfo').textContent='Cargando deteccion...';
+  // Mostrar modal primero
   cvm.classList.add('open');
+  document.getElementById('cropInfo').textContent='Procesando imagen...';
 
-  // Intentar deteccion con OpenCV, si no usar esquinas por defecto
-  ensureCV().then(function(){
-    var pts=detectDocumentCorners(photoCanvas);
-    // Convertir coords imagen a coords pantalla
-    cropPoints=pts.map(function(p){
-      return{x:Math.round(p.x*ratio), y:Math.round(p.y*ratio)};
-    });
+  // Dos frames para que el layout se estabilice
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+
+    var maxW=window.innerWidth;
+    var maxH=window.innerHeight - document.getElementById('cropBar').offsetHeight - 20;
+    var ratio=Math.min(maxW/photoCanvas.width, maxH/photoCanvas.height);
+
+    cropDispW=Math.round(photoCanvas.width*ratio);
+    cropDispH=Math.round(photoCanvas.height*ratio);
+    cropImgW=photoCanvas.width;
+    cropImgH=photoCanvas.height;
+
+    // Fijar tamaño exacto del canvas
+    cropC.width=cropDispW;
+    cropC.height=cropDispH;
+    cropC.style.width=cropDispW+'px';
+    cropC.style.height=cropDispH+'px';
+
+    // Dibujar imagen
+    var ctx2=cropC.getContext('2d');
+    ctx2.drawImage(photoCanvas,0,0,cropDispW,cropDispH);
+
+    // Ajustar SVG overlay al mismo tamaño que el canvas
+    var svg=document.getElementById('cropOverlay');
+    svg.setAttribute('width',cropDispW);
+    svg.setAttribute('height',cropDispH);
+    svg.style.width=cropDispW+'px';
+    svg.style.height=cropDispH+'px';
+
+    // Calcular offset del canvas dentro del wrapper para posicionar puntos
+    var wrapRect=document.getElementById('cropWrap').getBoundingClientRect();
+    var canvRect=cropC.getBoundingClientRect();
+    cropCanvasOffX=canvRect.left-wrapRect.left;
+    cropCanvasOffY=canvRect.top-wrapRect.top;
+
+    // Posicionar SVG sobre el canvas exactamente
+    svg.style.left=cropCanvasOffX+'px';
+    svg.style.top=cropCanvasOffY+'px';
+
+    // Esquinas por defecto (8% de margen)
+    var mx=Math.round(cropDispW*0.08), my=Math.round(cropDispH*0.08);
+    cropPoints=[
+      {x:mx,            y:my},
+      {x:cropDispW-mx,  y:my},
+      {x:cropDispW-mx,  y:cropDispH-my},
+      {x:mx,            y:cropDispH-my}
+    ];
     updateCropUI();
-    document.getElementById('cropInfo').textContent='Ajusta las esquinas si es necesario';
-  });
+    document.getElementById('cropInfo').textContent='Ajusta las esquinas del documento';
+
+    // OpenCV en segundo plano sin bloquear
+    ensureCV().then(function(){
+      try{
+        var pts=detectDocumentCorners(photoCanvas);
+        cropPoints=pts.map(function(p){
+          return{x:Math.round(p.x*ratio),y:Math.round(p.y*ratio)};
+        });
+        updateCropUI();
+        document.getElementById('cropInfo').textContent='Documento detectado';
+      }catch(e){}
+    }).catch(function(){});
+
+  });});
 }
 
 function detectDocumentCorners(canvas){
@@ -1334,24 +1377,25 @@ function detectDocumentCorners(canvas){
   return def;
 }
 
-function updateCropUI(){
-  var svg=document.getElementById('cropSvg');
-  var pts=cropPoints;
-  // Linea del poligono
-  var poly='M'+pts.map(function(p){return p.x+','+p.y}).join('L')+'Z';
-  svg.innerHTML='<path d="'+poly+'" fill="rgba(91,95,239,0.2)" stroke="#5b5fef" stroke-width="2"/>';
+var cropCanvasOffX=0, cropCanvasOffY=0;
 
-  // Mover puntos visuales
+function updateCropUI(){
+  var svg=document.getElementById('cropOverlay');
+  var pts=cropPoints;
+  var poly='M'+pts.map(function(p){return p.x+','+p.y}).join('L')+'Z';
+  svg.innerHTML='<path d="'+poly+'" fill="rgba(91,95,239,0.18)" stroke="#5b5fef" stroke-width="2.5" stroke-linejoin="round"/>';
+
+  // Los puntos .crop-pt son hijos del cropWrap, así que sumamos el offset del canvas
   ['pt0','pt1','pt2','pt3'].forEach(function(id,i){
     var el=document.getElementById(id);
-    el.style.left=pts[i].x+'px';
-    el.style.top=pts[i].y+'px';
+    el.style.left=(pts[i].x+cropCanvasOffX)+'px';
+    el.style.top=(pts[i].y+cropCanvasOffY)+'px';
     makeCropPointDraggable(el,i);
   });
 }
 
 function makeCropPointDraggable(el,idx){
-  el.onmousedown=function(e){startDragCropPt(e.clientX,e.clientY,idx)};
+  el.onmousedown=function(e){e.preventDefault();startDragCropPt(e.clientX,e.clientY,idx)};
   el.ontouchstart=function(e){e.preventDefault();startDragCropPt(e.touches[0].clientX,e.touches[0].clientY,idx)};
 }
 
@@ -1366,9 +1410,16 @@ function startDragCropPt(cx,cy,idx){
     cropPoints[draggingPt].y=Math.max(0,Math.min(cropDispH,ptStartY+(ty-dragStartY)));
     updateCropUI();
   }
-  function onUp(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onUp);}
-  document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
-  document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onUp);
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('touchend',onUp);
+  }
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onUp);
 }
 
 function rejectCrop(){
