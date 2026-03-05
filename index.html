@@ -136,6 +136,13 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 /* Boton modo claro */
 #modeBtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;flex-shrink:0}
 #modeBtn:active{transform:scale(.92)}
+.tool-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 10px;border-radius:14px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;transition:.12s}
+.tool-card:active{background:var(--s3);transform:scale(.96)}
+.wm-preset{padding:6px 12px;border-radius:100px;border:1px solid var(--brd);background:var(--s2);color:var(--mut);font-size:.72rem;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer}
+.wm-preset:active{background:var(--acc);color:#fff;border-color:var(--acc)}
+.merge-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border-radius:8px;border:1px solid var(--brd);font-size:.78rem}
+.merge-item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.merge-item button{color:var(--acc2);background:none;border:none;cursor:pointer;font-size:.9rem;padding:2px 6px}
 /* Modal texto */
 #textM{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)}
 #textM.open{display:flex}
@@ -156,6 +163,36 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 #loading.on{display:flex}
 .spin{width:40px;height:40px;border:3px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:rot .75s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
+/* Biometría */
+#bioToggleRow{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-top:1px solid var(--brd);margin-top:4px}
+#bioToggleRow span{font-size:.75rem;color:var(--mut);display:flex;align-items:center;gap:6px}
+.bio-switch{position:relative;width:40px;height:22px;cursor:pointer}
+.bio-switch input{opacity:0;width:0;height:0}
+.bio-slider{position:absolute;inset:0;background:var(--brd);border-radius:22px;transition:.2s}
+.bio-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.bio-switch input:checked+.bio-slider{background:var(--acc)}
+.bio-switch input:checked+.bio-slider::before{transform:translateX(18px)}
+/* Overlay biometrico */
+#bioOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:400;flex-direction:column;align-items:center;justify-content:center;gap:20px;backdrop-filter:blur(16px)}
+#bioOverlay.show{display:flex}
+.bio-icon{width:80px;height:80px;border-radius:50%;border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;animation:bioPulse 1.5s ease-in-out infinite}
+@keyframes bioPulse{0%,100%{box-shadow:0 0 0 0 rgba(91,95,239,.4)}50%{box-shadow:0 0 0 16px rgba(91,95,239,0)}}
+.bio-title{font-size:1rem;font-weight:800;color:#fff}
+.bio-sub{font-size:.78rem;color:var(--mut);text-align:center;max-width:220px;line-height:1.5}
+#bioCancelBtn{padding:10px 28px;border-radius:100px;border:1px solid var(--brd);background:transparent;color:var(--mut);font-family:'Syne',sans-serif;font-size:.82rem;cursor:pointer;margin-top:8px}
+body.present #topbar,body.present #tb,body.present #dock,body.present #ad-banner,body.present #thumbPanel,body.present #thumbToggle,body.present #placeOverlay{display:none!important}
+body.present #app{padding-bottom:0}
+body.present #main{background:#000}
+#presentBar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;padding:16px 24px calc(16px + var(--safe-b));background:linear-gradient(transparent,rgba(0,0,0,.85));align-items:center;justify-content:space-between;gap:12px}
+body.present #presentBar{display:flex}
+#presentBar button{width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:.15s;flex-shrink:0}
+#presentBar button:active{background:rgba(255,255,255,.3);transform:scale(.92)}
+#presentBar button:disabled{opacity:.3}
+#presentPgI{font-family:'DM Mono',monospace;font-size:.85rem;color:rgba(255,255,255,.7);min-width:60px;text-align:center}
+#presentHint{position:fixed;top:0;left:0;right:0;padding:calc(var(--safe-t)+10px) 16px 10px;background:linear-gradient(rgba(0,0,0,.7),transparent);display:none;align-items:center;justify-content:space-between;z-index:500}
+body.present #presentHint{display:flex}
+#presentTitle{font-size:.8rem;color:rgba(255,255,255,.8);font-family:'Syne',sans-serif;font-weight:700}
+#exitPresentBtn{padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.4);color:#fff;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer}
 #ldmsg{font-size:.82rem;color:var(--mut);font-family:'DM Mono',monospace}
 </style>
 </head>
@@ -262,6 +299,115 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
   <button class="dbtn" style="color:#3dd68c" onclick="sharePDF()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
   <div class="dsep"></div>
   <button class="dbtn" style="color:#7070a0" onclick="openScanner()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+  <div class="dsep"></div>
+  <button class="dbtn" style="color:#a07070" onclick="openToolsMenu()" title="Mas herramientas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg></button>
+  <div class="dsep"></div>
+  <button class="dbtn" id="presentBtn" style="color:#e0a0ff" onclick="enterPresent()" title="Presentacion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
+</div>
+
+<!-- Barra superior modo presentacion -->
+<div id="presentHint">
+  <span id="presentTitle" class="logo" style="-webkit-text-fill-color:rgba(255,255,255,.85)">&#10022; Rúbrica</span>
+  <button id="exitPresentBtn" onclick="exitPresent()">✕ Salir</button>
+</div>
+
+<!-- Barra inferior modo presentacion -->
+<div id="presentBar">
+  <button id="pPrevBtn" onclick="presentGoPage(-1)" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span id="presentPgI">—</span>
+  <button id="pNextBtn" onclick="presentGoPage(1)" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+</div>
+
+<!-- Menu herramientas extra -->
+<div id="toolsM" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
+  <div class="ssheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">Herramientas PDF</span><button class="shclose" onclick="closeToolsMenu()">X</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px">
+      <button class="tool-card" onclick="closeToolsMenu();rotatePage(-1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        <span>Rotar izq.</span>
+      </button>
+      <button class="tool-card" onclick="closeToolsMenu();rotatePage(1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-4.95"/></svg>
+        <span>Rotar der.</span>
+      </button>
+      <button class="tool-card" onclick="closeToolsMenu();compressPDF()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Comprimir</span>
+      </button>
+      <button class="tool-card" onclick="closeToolsMenu();openFormFill()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>
+        <span>Rellenar formulario</span>
+      </button>
+      <button class="tool-card" onclick="closeToolsMenu();openMerge()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg>
+        <span>Combinar PDF</span>
+      </button>
+      <button class="tool-card" onclick="closeToolsMenu();toggleSigDate()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="sigDateLbl">Fecha en firma</span>
+      </button>
+      <button class="tool-card" onclick="closeToolsMenu();toggleSelectMode()" id="selectModeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M4 4l7 19 3-8 8-3z"/><circle cx="18" cy="18" r="4" stroke-dasharray="2 2"/></svg>
+        <span id="selectModeLbl">Selec. anotación</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rellenar formulario -->
+<div id="formFillM" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
+  <div class="ssheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">Rellenar formulario</span><button class="shclose" onclick="closeFormFill()">X</button></div>
+    <div id="formFieldsList" style="padding:12px 16px;max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+      <p style="font-size:.78rem;color:var(--mut);text-align:center">Detectando campos...</p>
+    </div>
+    <div class="shact">
+      <button class="shbtn" onclick="closeFormFill()">Cancelar</button>
+      <button class="shbtn p" onclick="applyFormFields()">Aplicar campos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar anotación seleccionada -->
+<div id="editAnnotM" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
+  <div class="ssheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">Editar anotación</span><button class="shclose" onclick="closeEditAnnot()">X</button></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px" id="editAnnotBody"></div>
+    <div class="shact">
+      <button class="shbtn" style="color:var(--acc2);border-color:var(--acc2)" onclick="deleteSelectedAnnot()">Eliminar</button>
+      <button class="shbtn" onclick="closeEditAnnot()">Cancelar</button>
+      <button class="shbtn p" onclick="saveEditAnnot()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal combinar PDFs -->
+<div id="mergeM" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
+  <div class="ssheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">Combinar PDFs</span><button class="shclose" onclick="closeMerge()">X</button></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <p style="font-size:.78rem;color:var(--mut)">Selecciona los PDFs que quieres unir (en orden):</p>
+      <div id="mergeList" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto"></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px dashed var(--brd);border-radius:10px;cursor:pointer;font-size:.82rem;color:var(--acc)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Añadir PDF
+        <input type="file" id="mergeFile" accept=".pdf,application/pdf" multiple style="display:none" onchange="addMergeFiles(this)">
+      </label>
+    </div>
+    <div class="shact">
+      <button class="shbtn" onclick="closeMerge()">Cancelar</button>
+      <button class="shbtn p" onclick="doMerge()">Combinar y abrir</button>
+    </div>
+  </div>
 </div>
 
 <div id="sigM">
@@ -282,7 +428,27 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
       <button class="shbtn" onclick="saveSig()" style="color:#f0c040;border-color:#f0c040">Guardar</button>
       <button class="shbtn p" onclick="confirmSig()">Usar</button>
     </div>
+    <div id="bioToggleRow">
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        Confirmar con biometría
+      </span>
+      <label class="bio-switch">
+        <input type="checkbox" id="bioToggle" onchange="toggleBio(this)">
+        <span class="bio-slider"></span>
+      </label>
+    </div>
   </div>
+</div>
+
+<!-- Overlay verificación biométrica -->
+<div id="bioOverlay">
+  <div class="bio-icon">
+    <svg id="bioIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="38" height="38"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+  </div>
+  <p class="bio-title" id="bioTitle">Verificando identidad</p>
+  <p class="bio-sub" id="bioSub">Usa tu huella dactilar o Face ID para confirmar la firma</p>
+  <button id="bioCancelBtn" onclick="cancelBio()">Cancelar</button>
 </div>
 
 <div id="scanM">
@@ -352,21 +518,31 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 <div id="proModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
   <div style="background:var(--s1);border:1px solid var(--brd);border-radius:22px 22px 0 0;padding:0 0 calc(var(--safe-b)+16px);width:100%;max-width:500px;animation:su .28s cubic-bezier(.32,1,.32,1)">
     <div style="width:38px;height:4px;border-radius:2px;background:var(--brd);margin:13px auto 20px"></div>
-    <div style="text-align:center;padding:0 24px 20px;border-bottom:1px solid var(--brd)">
+    <div style="text-align:center;padding:0 24px 16px;border-bottom:1px solid var(--brd)">
       <div style="font-size:2rem;margin-bottom:8px">&#11088;</div>
       <p style="font-size:1.2rem;font-weight:800">Rubrica Pro</p>
-      <p id="proModalMsg" style="font-size:.82rem;color:var(--acc2);margin-top:6px;font-weight:700">Has usado tus 3 guardados gratuitos</p>
-      <p style="font-size:.75rem;color:var(--mut);margin-top:4px">Hazte Pro para guardar y compartir sin limites</p>
+      <p id="proModalMsg" style="font-size:.82rem;color:var(--acc2);margin-top:6px;font-weight:700">Has usado tus usos gratuitos</p>
     </div>
-    <div style="padding:18px 24px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--brd)">
-      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">+</span> Guardar y compartir ilimitado</div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">+</span> Sin anuncios</div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:.85rem"><span style="color:var(--ok)">+</span> Escanear ilimitado</div>
+    <!-- Opcion gratis: ver video -->
+    <div style="padding:14px 16px;border-bottom:1px solid var(--brd)">
+      <button onclick="watchVideo()" style="width:100%;padding:15px;border-radius:13px;border:1px solid var(--ok);background:rgba(61,214,140,.08);color:var(--ok);font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>
+        Ver un video y obtener 3 usos gratis
+      </button>
+      <p style="font-size:.68rem;color:var(--mut);text-align:center;margin-top:6px">30 segundos de video - luego sigues usando la app</p>
     </div>
-    <div style="padding:16px">
-      <button onclick="purchasePro()" style="width:100%;padding:18px;border-radius:13px;border:2px solid #f0c040;background:rgba(240,192,64,.08);color:var(--txt);font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
-        <div><div>Eliminar anuncios</div><div style="font-size:.73rem;color:var(--mut);font-weight:400;margin-top:3px">Pago unico - sin mas cargos</div></div>
-        <div style="font-size:1.3rem;font-weight:800;color:#f0c040">1,99&euro;</div>
+    <!-- Opcion Pro -->
+    <div style="padding:14px 16px 8px">
+      <div style="font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:10px">O elimina los limites para siempre</div>
+      <div style="padding:12px 16px;border-radius:11px;border:1px solid var(--brd);background:var(--s2);margin-bottom:10px;font-size:.8rem">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="color:var(--ok)">+</span> Guardar y compartir ilimitado</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="color:var(--ok)">+</span> Escanear ilimitado</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="color:var(--ok)">+</span> Firmas guardadas ilimitadas</div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="color:var(--ok)">+</span> Sin anuncios ni videos</div>
+      </div>
+      <button onclick="purchasePro()" style="width:100%;padding:16px;border-radius:13px;border:2px solid #f0c040;background:rgba(240,192,64,.08);color:var(--txt);font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <div><div>Comprar Rubrica Pro</div><div style="font-size:.72rem;color:var(--mut);font-weight:400;margin-top:2px">Pago unico - sin mas cargos</div></div>
+        <div style="font-size:1.3rem;font-weight:800;color:#f0c040">3,99&euro;</div>
       </button>
       <button onclick="closePro()" style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--brd);background:transparent;color:var(--mut);font-family:'Syne',sans-serif;font-size:.8rem;cursor:pointer;margin-top:8px">Ahora no</button>
     </div>
@@ -834,23 +1010,128 @@ sigCv.addEventListener('touchstart',function(e){e.preventDefault();sigStroke(e,t
 sigCv.addEventListener('touchmove',function(e){e.preventDefault();sigStroke(e,false)},{passive:false});
 sigCv.addEventListener('touchend',function(){sigDraw=false});
 
+// ── BIOMETRÍA WebAuthn (sin guardar datos) ──
+var bioEnabled = false; // solo en sesion, no se guarda en localStorage
+var bioCallback = null;
+
+function toggleBio(el){
+  if(el.checked){
+    if(!window.PublicKeyCredential){
+      toast('Tu navegador no soporta biometría','err');
+      el.checked=false; return;
+    }
+    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function(ok){
+      if(!ok){
+        toast('Este dispositivo no tiene huella ni Face ID disponible','err');
+        el.checked=false; return;
+      }
+      bioEnabled=true;
+      toast('Biometría activada para esta sesión','ok');
+    });
+  } else {
+    bioEnabled=false;
+    toast('Biometría desactivada','ok');
+  }
+}
+
+function verifyBiometric(callback){
+  if(!bioEnabled||!window.PublicKeyCredential){
+    callback(true); return;
+  }
+  var challenge=new Uint8Array(32);
+  crypto.getRandomValues(challenge);
+
+  bioCallback=callback;
+  showBioOverlay('Verificando identidad','Usa tu huella dactilar o Face ID para confirmar la firma');
+
+  // Verificacion sin credencial registrada — el dispositivo usa el autenticador de plataforma
+  navigator.credentials.get({
+    publicKey:{
+      challenge: challenge,
+      rpId: location.hostname||'localhost',
+      userVerification:'required',
+      timeout: 60000
+    }
+  }).then(function(){
+    hideBioOverlay();
+    showBioSuccess();
+    setTimeout(function(){
+      document.getElementById('bioOverlay').classList.remove('show');
+      document.getElementById('bioCancelBtn').style.display='';
+      if(bioCallback){bioCallback(true);bioCallback=null;}
+    },900);
+  }).catch(function(err){
+    hideBioOverlay();
+    document.getElementById('bioCancelBtn').style.display='';
+    if(err.name==='NotAllowedError'){
+      toast('Verificación cancelada','err');
+      if(bioCallback){bioCallback(false);bioCallback=null;}
+    } else {
+      // Error tecnico — no bloquear al usuario
+      toast('Biometría no disponible, continuando','err');
+      if(bioCallback){bioCallback(true);bioCallback=null;}
+    }
+  });
+}
+
+function showBioOverlay(title,sub){
+  document.getElementById('bioTitle').textContent=title;
+  document.getElementById('bioSub').textContent=sub;
+  document.getElementById('bioIco').style.stroke='var(--acc)';
+  document.getElementById('bioOverlay').classList.add('show');
+}
+function hideBioOverlay(){
+  document.getElementById('bioOverlay').classList.remove('show');
+}
+function showBioSuccess(){
+  document.getElementById('bioTitle').textContent='¡Identidad verificada!';
+  document.getElementById('bioSub').textContent='Tu firma ha sido autenticada con biometría';
+  document.getElementById('bioIco').style.stroke='var(--ok)';
+  document.getElementById('bioCancelBtn').style.display='none';
+  document.getElementById('bioOverlay').classList.add('show');
+}
+function cancelBio(){
+  hideBioOverlay();
+  toast('Verificación cancelada','err');
+  if(bioCallback){bioCallback(false);bioCallback=null;}
+}
+
+// Modificar confirmSig para usar biometría si está activada
 function confirmSig(){
   var d=sigX.getImageData(0,0,sigCv.width,sigCv.height).data;
   var ink=false;
   for(var i=0;i<d.length;i+=4){if(d[i+3]>10&&!(d[i]>230&&d[i+1]>230&&d[i+2]>230)){ink=true;break;}}
   if(!ink){toast('Dibuja tu firma primero','err');return;}
+
+  // Preparar firma (transparente)
   var tmp=document.createElement('canvas');tmp.width=sigCv.width;tmp.height=sigCv.height;
   var tx=tmp.getContext('2d');tx.drawImage(sigCv,0,0);
   var img=tx.getImageData(0,0,tmp.width,tmp.height),px=img.data;
   for(var i=0;i<px.length;i+=4){var br=(px[i]+px[i+1]+px[i+2])/3;var al=Math.round(255*(1-br/255));px[i+3]=al<30?0:al;}
-  tx.putImageData(img,0,0);sigUrl=tmp.toDataURL('image/png');
-  closeSig();placingSig=true;activeSig=null;
-  document.querySelectorAll('.tbtn[id^="t-"],.dbtn[id^="d-"]').forEach(function(b){b.classList.remove('on')});
-  document.getElementById('t-cursor').classList.add('on');document.getElementById('d-cursor').classList.add('on');
-  tool='cursor';ixC.style.cursor='crosshair';
-  document.getElementById('placeOverlay').classList.add('on');
-  document.getElementById('placeMsg').textContent='Toca el PDF donde colocar la firma';
-  document.getElementById('confirmSigBtn').style.display='none';
+  tx.putImageData(img,0,0);
+  var pendingUrl=tmp.toDataURL('image/png');
+
+  closeSig();
+
+  function placeSig(){
+    sigUrl=pendingUrl;
+    placingSig=true;activeSig=null;
+    document.querySelectorAll('.tbtn[id^="t-"],.dbtn[id^="d-"]').forEach(function(b){b.classList.remove('on')});
+    document.getElementById('t-cursor').classList.add('on');document.getElementById('d-cursor').classList.add('on');
+    tool='cursor';ixC.style.cursor='crosshair';
+    document.getElementById('placeOverlay').classList.add('on');
+    document.getElementById('placeMsg').textContent='Toca el PDF donde colocar la firma';
+    document.getElementById('confirmSigBtn').style.display='none';
+  }
+
+  if(bioEnabled){
+    verifyBiometric(function(ok){
+      if(ok) placeSig();
+      else toast('Firma cancelada — verificación no completada','err');
+    });
+  } else {
+    placeSig();
+  }
 }
 
 function updateNav(){
@@ -900,14 +1181,26 @@ function openScanner(){
   if(!isPro&&getUsos()>=USOS_GRATIS){openPro(true);return;}
   scannedPages=[];
   document.getElementById('scanM').classList.add('open');
+  document.getElementById('scanHint').textContent='Iniciando camara...';
+  document.getElementById('scanShot').style.opacity='0.4';
   navigator.mediaDevices.getUserMedia({
-    video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false
+    video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false
   }).then(function(stream){
     scanStream=stream;
-    document.getElementById('scanVideo').srcObject=stream;
-    // Precargar OpenCV en segundo plano
+    var video=document.getElementById('scanVideo');
+    video.srcObject=stream;
+    video.onloadedmetadata=function(){
+      video.play();
+      setTimeout(function(){
+        document.getElementById('scanShot').style.opacity='1';
+        document.getElementById('scanHint').textContent='Centra el documento y dispara';
+      },800);
+    };
     ensureCV();
-  }).catch(function(){toast('No se puede acceder a la camara','err');});
+  }).catch(function(err){
+    toast('No se puede acceder a la camara','err');
+    document.getElementById('scanM').classList.remove('open');
+  });
 }
 
 function closeScanner(){
@@ -922,9 +1215,20 @@ function closeScanner(){
 
 function takeShot(){
   var video=document.getElementById('scanVideo');
+  // Esperar a que el video tenga dimensiones reales
+  if(!video.videoWidth||!video.videoHeight){
+    toast('Camara iniciando, espera un momento...','err');
+    return;
+  }
   var c=document.createElement('canvas');
   c.width=video.videoWidth;c.height=video.videoHeight;
-  c.getContext('2d').drawImage(video,0,0);
+  var ctx=c.getContext('2d');
+  ctx.drawImage(video,0,0,c.width,c.height);
+  // Verificar que la captura tiene contenido
+  var px=ctx.getImageData(0,0,10,10).data;
+  var blank=true;
+  for(var i=0;i<px.length;i+=4){if(px[i+3]>0){blank=false;break;}}
+  if(blank){toast('Error al capturar, reintenta','err');return;}
 
   // Flash visual
   var fl=document.createElement('div');
@@ -1228,13 +1532,62 @@ function buildAnnotatedPDF(){
 var USOS_GRATIS=3;
 function getUsos(){return parseInt(localStorage.getItem('rubrica_usos')||'0');}
 function addUso(){localStorage.setItem('rubrica_usos',getUsos()+1);}
+function resetUsos(){localStorage.setItem('rubrica_usos','0');}
 function checkUso(){
   if(isPro)return true;
-  if(getUsos()>=USOS_GRATIS){openPro(true);return false;}
+  if(getUsos()>=USOS_GRATIS){
+    openPro(false);
+    return false;
+  }
   addUso();
   var r=USOS_GRATIS-getUsos();
-  toast('Guardado gratuito '+getUsos()+'/'+USOS_GRATIS+(r>0?' - te quedan '+r:''));
+  toast(r>0?'Te quedan '+r+' usos gratuitos':'Ultimo uso gratuito - luego ve un video');
   return true;
+}
+
+// Modal video recompensado
+var _videoCallback=null;
+function watchVideo(){
+  closePro();
+  // Simulacion del dialogo de AdMob rewarded video
+  // En produccion esto seria: admob.showRewardedAd(callback)
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
+  var count=30;
+  var bar=document.createElement('div');
+  bar.style.cssText='width:280px;height:6px;background:#333;border-radius:3px;overflow:hidden';
+  var fill=document.createElement('div');
+  fill.style.cssText='height:100%;background:var(--ok);width:0%;transition:width 1s linear';
+  bar.appendChild(fill);
+  var lbl=document.createElement('p');
+  lbl.style.cssText='color:#fff;font-family:Syne,sans-serif;font-size:1rem;font-weight:700';
+  lbl.textContent='Video publicitario';
+  var cnt=document.createElement('p');
+  cnt.style.cssText='color:#aaa;font-family:"DM Mono",monospace;font-size:.85rem';
+  cnt.textContent='Cerrando en '+count+'s...';
+  var adbox=document.createElement('div');
+  adbox.style.cssText='width:300px;height:180px;background:#1a1a2e;border:1px solid #303050;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#5b5fef;font-family:Syne,sans-serif;font-size:.85rem;font-weight:700';
+  adbox.textContent='Aqui aparecera el anuncio de AdMob';
+  modal.appendChild(lbl);modal.appendChild(adbox);modal.appendChild(bar);modal.appendChild(cnt);
+  document.body.appendChild(modal);
+  setTimeout(function(){fill.style.width='100%'},50);
+  var t=setInterval(function(){
+    count--;cnt.textContent='Cerrando en '+count+'s...';
+    if(count<=0){
+      clearInterval(t);
+      document.body.removeChild(modal);
+      // Recompensar: resetear usos
+      resetUsos();
+      toast('+3 usos desbloqueados. Gracias por ver el video','ok');
+    }
+  },1000);
+}
+
+function purchasePro(){
+  var ok=confirm('Comprar Rubrica Pro - 3,99 EUR pago unico\n\n(En Play Store apareceria el dialogo de Google)');
+  if(!ok)return;
+  localStorage.setItem('rubrica_pro','1');isPro=true;closePro();applyProState();
+  toast('Bienvenido a Rubrica Pro!','ok');
 }
 
 function dlPDF(){
@@ -1289,21 +1642,412 @@ function applyProState(){
 }
 function openPro(porLimite){
   if(isPro){toast('Ya tienes Rubrica Pro','ok');return;}
-  document.getElementById('proModalMsg').textContent=porLimite
-    ?'Has usado tus '+USOS_GRATIS+' guardados gratuitos'
-    :'Desbloquea guardar y compartir ilimitados';
+  var msg=porLimite
+    ?'Has usado tus '+USOS_GRATIS+' usos gratuitos'
+    :'Desbloquea Rubrica sin limites';
+  document.getElementById('proModalMsg').textContent=msg;
   document.getElementById('proModal').style.display='flex';
 }
 function closePro(){document.getElementById('proModal').style.display='none';}
-function purchasePro(){
-  var ok=confirm('Comprar Rubrica Pro - 1,99 EUR pago unico\n\n(En Play Store apareceria el dialogo de Google)');
-  if(!ok)return;
-  localStorage.setItem('rubrica_pro','1');isPro=true;closePro();applyProState();
-  toast('Bienvenido a Rubrica Pro!','ok');
-}
 applyProState();
 // ============================================================
-// 1. MODO CLARO / OSCURO
+// HERRAMIENTAS EXTRA
+// ============================================================
+function openToolsMenu(){document.getElementById('toolsM').style.display='flex';}
+function closeToolsMenu(){document.getElementById('toolsM').style.display='none';}
+
+// ── 1. ROTAR PÁGINA ──
+var pageRotations={};
+function rotatePage(dir){
+  if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+  var cur=pageRotations[curPage]||0;
+  pageRotations[curPage]=(cur+dir*90+360)%360;
+  renderPage(curPage);
+  toast('Pagina rotada '+(dir>0?'derecha':'izquierda'),'ok');
+}
+// Integrar rotacion en renderPage
+var _origRenderPage=renderPage;
+renderPage=function(n){
+  return _origRenderPage(n).then(function(){
+    var rot=pageRotations[n]||0;
+    if(rot===0)return;
+    // Rotar canvas completo
+    var tmp=document.createElement('canvas');
+    var rad=(rot*Math.PI/180);
+    var sin=Math.abs(Math.sin(rad)),cos=Math.abs(Math.cos(rad));
+    var nw=Math.round(annC.width*cos+annC.height*sin);
+    var nh=Math.round(annC.width*sin+annC.height*cos);
+    tmp.width=nw;tmp.height=nh;
+    var tx=tmp.getContext('2d');
+    tx.translate(nw/2,nh/2);tx.rotate(rad);
+    tx.drawImage(annC,-annC.width/2,-annC.height/2);
+    // Redibujar sobre el canvas original reescalado
+    annC.width=nw;annC.height=nh;
+    annX.drawImage(tmp,0,0);
+  });
+};
+
+// ── 2. COMPRIMIR PDF ──
+function compressPDF(){
+  if(!pdfRaw){toast('Abre un PDF primero','err');return;}
+  document.getElementById('loading').classList.add('on');
+  document.getElementById('ldmsg').textContent='Comprimiendo PDF...';
+  setTimeout(function(){
+    try{
+      PDFLib.PDFDocument.load(pdfRaw).then(function(srcDoc){
+        PDFLib.PDFDocument.create().then(function(newDoc){
+          newDoc.copyPages(srcDoc,srcDoc.getPageIndices()).then(function(pages){
+            pages.forEach(function(p){newDoc.addPage(p);});
+            // Guardar con compresion (objectsPerTick reduce tamaño)
+            return newDoc.save({useObjectStreams:true,addDefaultPage:false});
+          }).then(function(bytes){
+            var origKB=Math.round(pdfRaw.byteLength/1024);
+            var newKB=Math.round(bytes.byteLength/1024);
+            var pct=Math.round((1-newKB/origKB)*100);
+            document.getElementById('loading').classList.remove('on');
+            if(pct>0){
+              toast('Comprimido: '+origKB+'KB → '+newKB+'KB ('+pct+'% menos)','ok');
+            }else{
+              toast('El PDF ya estaba optimizado ('+origKB+'KB)','ok');
+            }
+            // Cargar el PDF comprimido
+            pdfRaw=bytes.buffer.slice(0);
+            var blob=new Blob([bytes],{type:'application/pdf'});
+            var url=URL.createObjectURL(blob);
+            pdfjsLib.getDocument(url).promise.then(function(doc){
+              pdfDoc=doc;totPages=doc.numPages;curPage=1;
+              renderPage(1);updateNav();
+            });
+          });
+        });
+      });
+    }catch(e){
+      document.getElementById('loading').classList.remove('on');
+      toast('Error al comprimir','err');
+    }
+  },100);
+}
+
+// ── 3. RELLENAR CAMPOS DE FORMULARIO ──
+var formFieldsData=[];
+function openFormFill(){
+  if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+  document.getElementById('formFillM').style.display='flex';
+  var list=document.getElementById('formFieldsList');
+  list.innerHTML='<p style="font-size:.78rem;color:var(--mut);text-align:center">Detectando campos...</p>';
+  formFieldsData=[];
+  pdfDoc.getPage(curPage).then(function(page){
+    return page.getAnnotations();
+  }).then(function(annotations){
+    var fields=annotations.filter(function(a){
+      return a.subtype==='Widget'&&(a.fieldType==='Tx'||a.fieldType==='Btn'||a.fieldType==='Ch');
+    });
+    list.innerHTML='';
+    if(!fields.length){
+      // Si no hay campos nativos, detectar zonas de texto en blanco como campos potenciales
+      list.innerHTML='<p style="font-size:.78rem;color:var(--mut);text-align:center;padding:8px">Este PDF no tiene campos de formulario nativos.<br><br>Usa la herramienta TEXTO para escribir encima del documento.</p>';
+      return;
+    }
+    fields.forEach(function(f,i){
+      formFieldsData.push(f);
+      var label=f.fieldName||f.alternativeText||('Campo '+(i+1));
+      var wrap=document.createElement('div');
+      wrap.style.cssText='display:flex;flex-direction:column;gap:4px';
+      var lbl=document.createElement('label');
+      lbl.style.cssText='font-size:.73rem;color:var(--mut);font-family:"DM Mono",monospace';
+      lbl.textContent=label;
+      var inp=document.createElement('input');
+      inp.type='text';
+      inp.dataset.idx=i;
+      inp.value=f.fieldValue||'';
+      inp.placeholder='Escribe aqui...';
+      inp.style.cssText='background:var(--s3);border:1px solid var(--brd);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:"Syne",sans-serif;font-size:.88rem;outline:none;width:100%';
+      wrap.appendChild(lbl);wrap.appendChild(inp);
+      list.appendChild(wrap);
+    });
+  });
+}
+function closeFormFill(){document.getElementById('formFillM').style.display='none';}
+function applyFormFields(){
+  var inputs=document.querySelectorAll('#formFieldsList input');
+  inputs.forEach(function(inp){
+    var idx=parseInt(inp.dataset.idx);
+    var field=formFieldsData[idx];
+    if(!field||!inp.value.trim())return;
+    // Calcular posición en canvas
+    var vp=field.rect;
+    var x=vp[0]*scale, y=(pdfDoc.getPage?0:0);
+    // Añadir como texto sobre el campo
+    pdfDoc.getPage(curPage).then(function(page){
+      var viewport=page.getViewport({scale:scale});
+      var fieldY=viewport.height-(vp[3]*scale);
+      paths.push({type:'text',color:'#111',x:vp[0]*scale+4,y:fieldY-4,
+        text:inp.value,page:curPage,font:'Arial',size:Math.round((vp[3]-vp[1])*scale*0.65)});
+      redraw();
+    });
+  });
+  closeFormFill();
+  toast('Campos aplicados','ok');
+}
+
+// ── 4. SELECCIONAR Y EDITAR ANOTACIONES ──
+var selectMode=false;
+var selectedAnnotIdx=-1;
+var editAnnotBackup=null;
+
+function toggleSelectMode(){
+  selectMode=!selectMode;
+  document.getElementById('selectModeLbl').textContent=selectMode?'Selec. ON ✓':'Selec. anotación';
+  document.getElementById('selectModeBtn').style.background=selectMode?'rgba(91,95,239,.18)':'';
+  toast(selectMode?'Toca una anotación para editarla':'Modo selección desactivado','ok');
+  if(!selectMode){selectedAnnotIdx=-1;redraw();}
+}
+
+function findAnnotAtPoint(x,y){
+  // Buscar la anotación más cercana al punto tocado en la página actual
+  var best=-1,bestDist=Infinity;
+  paths.forEach(function(p,i){
+    if(p.page!==curPage)return;
+    var dist=Infinity;
+    if(p.type==='text'||p.type==='sig'){
+      var pw=p.type==='sig'?p.w:120;
+      var ph=p.type==='sig'?p.h:20;
+      var cx2=p.x+pw/2, cy2=p.type==='sig'?p.y+ph/2:p.y-ph/2;
+      dist=Math.sqrt(Math.pow(x-cx2,2)+Math.pow(y-cy2,2));
+      if(dist<Math.max(pw,ph)*0.7)dist=0;
+    }else if(p.pts&&p.pts.length){
+      p.pts.forEach(function(pt){
+        var d=Math.sqrt(Math.pow(x-pt.x,2)+Math.pow(y-pt.y,2));
+        if(d<dist)dist=d;
+      });
+    }
+    if(dist<50&&dist<bestDist){bestDist=dist;best=i;}
+  });
+  return best;
+}
+
+function openEditAnnot(idx){
+  selectedAnnotIdx=idx;
+  var p=paths[idx];
+  editAnnotBackup=JSON.parse(JSON.stringify(p));
+  var body=document.getElementById('editAnnotBody');
+  body.innerHTML='';
+  if(p.type==='text'){
+    var lbl=document.createElement('p');
+    lbl.style.cssText='font-size:.75rem;color:var(--mut)';lbl.textContent='Texto:';
+    var inp=document.createElement('input');
+    inp.id='editAnnotText';inp.type='text';inp.value=p.text;
+    inp.style.cssText='background:var(--s3);border:1px solid var(--brd);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:"Syne",sans-serif;font-size:.88rem;outline:none;width:100%';
+    var sizeRow=document.createElement('div');
+    sizeRow.style.cssText='display:flex;align-items:center;gap:8px';
+    sizeRow.innerHTML='<span style="font-size:.73rem;color:var(--mut);min-width:40px">Tamaño</span><input type="range" id="editAnnotSize" min="8" max="72" value="'+p.size+'" style="flex:1"><span id="editAnnotSizeLbl" style="font-size:.73rem;color:var(--mut);min-width:32px">'+p.size+'px</span>';
+    body.appendChild(lbl);body.appendChild(inp);body.appendChild(sizeRow);
+    setTimeout(function(){
+      document.getElementById('editAnnotSize').oninput=function(){
+        document.getElementById('editAnnotSizeLbl').textContent=this.value+'px';
+      };
+    },50);
+  }else if(p.type==='draw'||p.type==='highlight'){
+    var info=document.createElement('p');
+    info.style.cssText='font-size:.82rem;color:var(--mut);text-align:center;padding:8px';
+    info.textContent=(p.type==='draw'?'Trazo dibujado':'Resaltado')+' - puedes eliminarlo o mantenerlo';
+    body.appendChild(info);
+  }else if(p.type==='sig'){
+    var info=document.createElement('p');
+    info.style.cssText='font-size:.82rem;color:var(--mut);text-align:center;padding:8px';
+    info.textContent='Firma colocada en esta página';
+    body.appendChild(info);
+  }
+  document.getElementById('editAnnotM').style.display='flex';
+  // Resaltar la anotación seleccionada
+  redraw();
+  if(p.type==='text'){
+    annX.save();
+    var fs=Math.round(p.size*scale);
+    annX.font=fs+'px '+(p.font||'Arial');
+    var tw=annX.measureText(p.text).width;
+    annX.strokeStyle='#f0c040';annX.lineWidth=2;annX.setLineDash([4,3]);
+    annX.strokeRect(p.x-3,p.y-fs-3,tw+6,fs+8);
+    annX.setLineDash([]);annX.restore();
+  }
+}
+function closeEditAnnot(){
+  document.getElementById('editAnnotM').style.display='none';
+  selectedAnnotIdx=-1;redraw();
+}
+function saveEditAnnot(){
+  if(selectedAnnotIdx<0)return;
+  var p=paths[selectedAnnotIdx];
+  if(p.type==='text'){
+    var inp=document.getElementById('editAnnotText');
+    var sizeInp=document.getElementById('editAnnotSize');
+    if(inp)p.text=inp.value;
+    if(sizeInp)p.size=parseInt(sizeInp.value);
+  }
+  closeEditAnnot();
+  redraw();
+  toast('Anotación actualizada','ok');
+}
+function deleteSelectedAnnot(){
+  if(selectedAnnotIdx<0)return;
+  paths.splice(selectedAnnotIdx,1);
+  closeEditAnnot();
+  redraw();
+  toast('Anotación eliminada','ok');
+}
+
+// Interceptar tap en select mode
+var _origTouchStartIxC=ixC.ontouchstart;
+ixC.addEventListener('touchstart',function(e){
+  if(!selectMode||activeText||activeSig)return;
+  if(e.touches.length===1){
+    var p=evXY(e.touches[0]);
+    var idx=findAnnotAtPoint(p.x,p.y);
+    if(idx>=0){e.preventDefault();e.stopImmediatePropagation();openEditAnnot(idx);}
+  }
+},{passive:false,capture:true});
+
+ixC.addEventListener('click',function(e){
+  if(!selectMode||activeText||activeSig)return;
+  var p=evXY(e);
+  var idx=findAnnotAtPoint(p.x,p.y);
+  if(idx>=0)openEditAnnot(idx);
+});
+
+// ── 5. ZOOM CON DOBLE TOQUE ──
+var lastTap=0;
+var zoomDefault=1.0;
+ixC.addEventListener('touchend',function(e){
+  if(e.touches.length>0)return;
+  var now=Date.now();
+  if(now-lastTap<300&&!drawing&&!activeSig&&!activeText){
+    // Doble tap
+    if(Math.abs(cssZ-zoomDefault)<0.05){
+      // Zoom al 200% centrado en el punto tocado
+      cssZ=2.0;
+    }else{
+      cssZ=zoomDefault;
+    }
+    cwEl.style.transform='scale('+cssZ+')';
+    cwEl.style.transformOrigin='top center';
+    document.getElementById('zLbl').textContent=Math.round(cssZ*100)+'%';
+  }
+  lastTap=now;
+},{passive:true});
+
+ixC.addEventListener('dblclick',function(e){
+  if(!selectMode){
+    cssZ=Math.abs(cssZ-zoomDefault)<0.05?2.0:zoomDefault;
+    cwEl.style.transform='scale('+cssZ+')';
+    cwEl.style.transformOrigin='top center';
+    document.getElementById('zLbl').textContent=Math.round(cssZ*100)+'%';
+  }
+});
+
+// ── 4. COMBINAR PDFs ──
+var mergeFiles=[];
+function openMerge(){
+  mergeFiles=[];
+  renderMergeList();
+  document.getElementById('mergeM').style.display='flex';
+}
+function closeMerge(){document.getElementById('mergeM').style.display='none';}
+function addMergeFiles(inp){
+  Array.from(inp.files).forEach(function(f){mergeFiles.push(f);});
+  inp.value='';
+  renderMergeList();
+}
+function renderMergeList(){
+  var list=document.getElementById('mergeList');
+  list.innerHTML='';
+  if(!mergeFiles.length){
+    list.innerHTML='<p style="font-size:.75rem;color:var(--mut);text-align:center;padding:10px">Aún no has añadido ningún PDF</p>';
+    return;
+  }
+  mergeFiles.forEach(function(f,i){
+    var item=document.createElement('div');item.className='merge-item';
+    item.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>'+f.name+'</span><button onclick="mergeFiles.splice('+i+',1);renderMergeList()">✕</button>';
+    list.appendChild(item);
+  });
+}
+function doMerge(){
+  if(mergeFiles.length<2){toast('Añade al menos 2 PDFs','err');return;}
+  closeMerge();
+  document.getElementById('loading').classList.add('on');
+  document.getElementById('ldmsg').textContent='Combinando PDFs...';
+  PDFLib.PDFDocument.create().then(function(merged){
+    var chain=Promise.resolve();
+    mergeFiles.forEach(function(file){
+      chain=chain.then(function(){
+        return new Promise(function(res,rej){
+          var fr=new FileReader();
+          fr.onload=function(e){
+            PDFLib.PDFDocument.load(e.target.result).then(function(doc){
+              merged.copyPages(doc,doc.getPageIndices()).then(function(pages){
+                pages.forEach(function(p){merged.addPage(p);});
+                res();
+              });
+            }).catch(rej);
+          };
+          fr.readAsArrayBuffer(file);
+        });
+      });
+    });
+    chain.then(function(){
+      merged.save().then(function(bytes){
+        document.getElementById('loading').classList.remove('on');
+        toast('PDFs combinados - '+merged.getPageCount()+' paginas','ok');
+        // Cargar resultado
+        pdfRaw=bytes.buffer.slice(0);
+        paths=[];pageRotations={};
+        var blob=new Blob([bytes],{type:'application/pdf'});
+        pdfjsLib.getDocument(URL.createObjectURL(blob)).promise.then(function(doc){
+          pdfDoc=doc;totPages=doc.numPages;curPage=1;activeSig=null;activeText=null;
+          document.getElementById('dlBtn').style.display='';
+          document.getElementById('dock').classList.add('show');
+          updateNav();renderPage(1);
+        });
+      });
+    }).catch(function(){
+      document.getElementById('loading').classList.remove('on');
+      toast('Error al combinar los PDFs','err');
+    });
+  });
+}
+
+// ── 5. FIRMA CON FECHA AUTOMÁTICA ──
+var sigDateEnabled=JSON.parse(localStorage.getItem('rubrica_sigdate')||'false');
+function toggleSigDate(){
+  sigDateEnabled=!sigDateEnabled;
+  localStorage.setItem('rubrica_sigdate',sigDateEnabled);
+  document.getElementById('sigDateLbl').textContent=sigDateEnabled?'Fecha: ON ✓':'Fecha en firma';
+  toast('Fecha bajo firma: '+(sigDateEnabled?'activada':'desactivada'),'ok');
+}
+// Actualizar label al cargar
+if(sigDateEnabled) document.getElementById('sigDateLbl').textContent='Fecha: ON ✓';
+
+// Integrar fecha en confirmPlaceSig
+var _origConfirmPlaceSig=confirmPlaceSig;
+confirmPlaceSig=function(){
+  _origConfirmPlaceSig();
+  if(!sigDateEnabled)return;
+  // Añadir fecha debajo de donde se colocó la firma
+  var lastSig=paths.filter(function(p){return p.type==='sig'&&p.page===curPage;}).pop();
+  if(!lastSig)return;
+  var today=new Date();
+  var dd=String(today.getDate()).padStart(2,'0');
+  var mm=String(today.getMonth()+1).padStart(2,'0');
+  var yyyy=today.getFullYear();
+  var dateStr=dd+'/'+mm+'/'+yyyy;
+  paths.push({
+    type:'text',color:'#333333',
+    x:lastSig.x,
+    y:lastSig.y+lastSig.h+14,
+    text:dateStr,page:curPage,
+    font:'Arial',size:11
+  });
+  redraw();
+};
 // ============================================================
 var lightMode = localStorage.getItem('rubrica_light')==='1';
 function applyMode(){
@@ -1481,7 +2225,77 @@ goPage=function(d){
   updateThumbActive();
 };
 
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(function(e){console.warn('SW:',e)});
+// ── MODO PRESENTACIÓN ──
+var presentActive=false;
+var presentSwipeX=0;
+
+function enterPresent(){
+  if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+  presentActive=true;
+  document.body.classList.add('present');
+  // Intentar pantalla completa nativa
+  var el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen().catch(function(){});
+  else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  // Ajustar zoom al ancho completo
+  cssZ=1.0;
+  cwEl.style.transform='scale(1)';
+  cwEl.style.transformOrigin='top center';
+  document.getElementById('main').scrollTop=0;
+  updatePresentNav();
+}
+
+function exitPresent(){
+  presentActive=false;
+  document.body.classList.remove('present');
+  if(document.exitFullscreen) document.exitFullscreen().catch(function(){});
+  else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+}
+
+function updatePresentNav(){
+  document.getElementById('presentPgI').textContent=curPage+'/'+totPages;
+  document.getElementById('pPrevBtn').disabled=curPage<=1;
+  document.getElementById('pNextBtn').disabled=curPage>=totPages;
+}
+
+function presentGoPage(d){
+  var n=curPage+d;
+  if(n<1||n>totPages)return;
+  curPage=n;
+  updateNav();
+  updatePresentNav();
+  setLoading(true,'Pagina '+n+'...');
+  renderPage(n).then(function(){setLoading(false);document.getElementById('main').scrollTop=0;});
+}
+
+// Swipe horizontal para cambiar página en modo presentación
+document.getElementById('main').addEventListener('touchstart',function(e){
+  if(!presentActive)return;
+  presentSwipeX=e.touches[0].clientX;
+},{passive:true});
+
+document.getElementById('main').addEventListener('touchend',function(e){
+  if(!presentActive)return;
+  var dx=e.changedTouches[0].clientX-presentSwipeX;
+  if(Math.abs(dx)>60){
+    presentGoPage(dx<0?1:-1);
+  }
+},{passive:true});
+
+// Salir de presentación con Escape
+document.addEventListener('keydown',function(e){
+  if(!presentActive)return;
+  if(e.key==='Escape') exitPresent();
+  if(e.key==='ArrowRight'||e.key===' ') presentGoPage(1);
+  if(e.key==='ArrowLeft') presentGoPage(-1);
+});
+
+// Sincronizar nav de presentación cuando cambia página por otros medios
+var _origUpdateNav2=updateNav;
+updateNav=function(){
+  _origUpdateNav2();
+  if(presentActive) updatePresentNav();
+};navigator.serviceWorker.register('./sw.js').catch(function(e){console.warn('SW:',e)});
 clearSigC();
 </script>
 </body>
