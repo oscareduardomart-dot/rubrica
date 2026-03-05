@@ -534,6 +534,59 @@ body.present #presentHint{display:flex}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
+// ── SISTEMA PRO Y USOS — definido primero para que todo el código lo tenga disponible ──
+var isPro=localStorage.getItem('rubrica_pro')==='1';
+var USOS_GRATIS=3;
+function getUsos(){return parseInt(localStorage.getItem('rubrica_usos')||'0');}
+function addUso(){localStorage.setItem('rubrica_usos',getUsos()+1);}
+function resetUsos(){localStorage.setItem('rubrica_usos','0');}
+function checkUso(){
+  if(isPro)return true;
+  if(getUsos()>=USOS_GRATIS){openPro(false);return false;}
+  addUso();
+  var r=USOS_GRATIS-getUsos();
+  toast(r>0?'Te quedan '+r+' usos gratuitos':'Ultimo uso gratuito - luego ve un video');
+  return true;
+}
+function openPro(porLimite){
+  if(isPro){toast('Ya tienes Rubrica Pro','ok');return;}
+  var msg=porLimite
+    ?'Has usado tus '+USOS_GRATIS+' usos gratuitos'
+    :'Desbloquea Rubrica sin limites';
+  document.getElementById('proModalMsg').textContent=msg;
+  document.getElementById('proModal').style.display='flex';
+}
+function closePro(){document.getElementById('proModal').style.display='none';}
+function purchasePro(){
+  var ok=confirm('Comprar Rubrica Pro - 3,99 EUR pago unico\n\n(En Play Store apareceria el dialogo de Google)');
+  if(!ok)return;
+  localStorage.setItem('rubrica_pro','1');isPro=true;closePro();applyProState();
+  toast('Bienvenido a Rubrica Pro!','ok');
+}
+function applyProState(){
+  var banner=document.getElementById('ad-banner'),appEl=document.getElementById('app');
+  if(isPro){if(banner)banner.style.display='none';appEl.style.paddingBottom='0';}
+  else{if(banner)banner.style.display='flex';appEl.style.paddingBottom='calc(50px + var(--safe-b))';}
+}
+function watchVideo(){
+  closePro();
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
+  var count=30;
+  var bar=document.createElement('div');bar.style.cssText='width:280px;height:6px;background:#333;border-radius:3px;overflow:hidden';
+  var fill=document.createElement('div');fill.style.cssText='height:100%;background:var(--ok);width:0%;transition:width 1s linear';
+  bar.appendChild(fill);
+  var lbl=document.createElement('p');lbl.style.cssText='color:#fff;font-family:Syne,sans-serif;font-size:1rem;font-weight:700';lbl.textContent='Video publicitario';
+  var cnt=document.createElement('p');cnt.style.cssText='color:#aaa;font-family:"DM Mono",monospace;font-size:.85rem';cnt.textContent='Cerrando en '+count+'s...';
+  var adbox=document.createElement('div');adbox.style.cssText='width:300px;height:180px;background:#1a1a2e;border:1px solid #303050;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#5b5fef;font-family:Syne,sans-serif;font-size:.85rem;font-weight:700';adbox.textContent='Aqui aparecera el anuncio de AdMob';
+  modal.appendChild(lbl);modal.appendChild(adbox);modal.appendChild(bar);modal.appendChild(cnt);
+  document.body.appendChild(modal);
+  setTimeout(function(){fill.style.width='100%'},50);
+  var t=setInterval(function(){
+    count--;cnt.textContent='Cerrando en '+count+'s...';
+    if(count<=0){clearInterval(t);document.body.removeChild(modal);resetUsos();toast('+3 usos desbloqueados. Gracias por ver el video','ok');}
+  },1000);
+}
 'use strict';
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -1636,67 +1689,6 @@ function buildAnnotatedPDF(){
   });
 }
 
-var USOS_GRATIS=3;
-function getUsos(){return parseInt(localStorage.getItem('rubrica_usos')||'0');}
-function addUso(){localStorage.setItem('rubrica_usos',getUsos()+1);}
-function resetUsos(){localStorage.setItem('rubrica_usos','0');}
-function checkUso(){
-  if(isPro)return true;
-  if(getUsos()>=USOS_GRATIS){
-    openPro(false);
-    return false;
-  }
-  addUso();
-  var r=USOS_GRATIS-getUsos();
-  toast(r>0?'Te quedan '+r+' usos gratuitos':'Ultimo uso gratuito - luego ve un video');
-  return true;
-}
-
-// Modal video recompensado
-var _videoCallback=null;
-function watchVideo(){
-  closePro();
-  // Simulacion del dialogo de AdMob rewarded video
-  // En produccion esto seria: admob.showRewardedAd(callback)
-  var modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
-  var count=30;
-  var bar=document.createElement('div');
-  bar.style.cssText='width:280px;height:6px;background:#333;border-radius:3px;overflow:hidden';
-  var fill=document.createElement('div');
-  fill.style.cssText='height:100%;background:var(--ok);width:0%;transition:width 1s linear';
-  bar.appendChild(fill);
-  var lbl=document.createElement('p');
-  lbl.style.cssText='color:#fff;font-family:Syne,sans-serif;font-size:1rem;font-weight:700';
-  lbl.textContent='Video publicitario';
-  var cnt=document.createElement('p');
-  cnt.style.cssText='color:#aaa;font-family:"DM Mono",monospace;font-size:.85rem';
-  cnt.textContent='Cerrando en '+count+'s...';
-  var adbox=document.createElement('div');
-  adbox.style.cssText='width:300px;height:180px;background:#1a1a2e;border:1px solid #303050;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#5b5fef;font-family:Syne,sans-serif;font-size:.85rem;font-weight:700';
-  adbox.textContent='Aqui aparecera el anuncio de AdMob';
-  modal.appendChild(lbl);modal.appendChild(adbox);modal.appendChild(bar);modal.appendChild(cnt);
-  document.body.appendChild(modal);
-  setTimeout(function(){fill.style.width='100%'},50);
-  var t=setInterval(function(){
-    count--;cnt.textContent='Cerrando en '+count+'s...';
-    if(count<=0){
-      clearInterval(t);
-      document.body.removeChild(modal);
-      // Recompensar: resetear usos
-      resetUsos();
-      toast('+3 usos desbloqueados. Gracias por ver el video','ok');
-    }
-  },1000);
-}
-
-function purchasePro(){
-  var ok=confirm('Comprar Rubrica Pro - 3,99 EUR pago unico\n\n(En Play Store apareceria el dialogo de Google)');
-  if(!ok)return;
-  localStorage.setItem('rubrica_pro','1');isPro=true;closePro();applyProState();
-  toast('Bienvenido a Rubrica Pro!','ok');
-}
-
 function dlPDF(){
   if(!pdfRaw)return;
   if(!checkUso())return;
@@ -1741,22 +1733,6 @@ function toast(msg,type){
   clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.className=''},3500);
 }
 
-var isPro=localStorage.getItem('rubrica_pro')==='1';
-function applyProState(){
-  var banner=document.getElementById('ad-banner'),appEl=document.getElementById('app');
-  if(isPro){if(banner)banner.style.display='none';appEl.style.paddingBottom='0';}
-  else{if(banner)banner.style.display='flex';appEl.style.paddingBottom='calc(50px + var(--safe-b))';}
-}
-function openPro(porLimite){
-  if(isPro){toast('Ya tienes Rubrica Pro','ok');return;}
-  var msg=porLimite
-    ?'Has usado tus '+USOS_GRATIS+' usos gratuitos'
-    :'Desbloquea Rubrica sin limites';
-  document.getElementById('proModalMsg').textContent=msg;
-  document.getElementById('proModal').style.display='flex';
-}
-function closePro(){document.getElementById('proModal').style.display='none';}
-applyProState();
 // ============================================================
 // HERRAMIENTAS EXTRA
 // ============================================================
