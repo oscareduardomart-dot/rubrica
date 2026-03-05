@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -340,9 +340,9 @@ body.present #presentHint{display:flex}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <span>Comprimir</span>
       </button>
-      <button class="tool-card" onclick="closeToolsMenu();openFormFill()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>
-        <span>Rellenar formulario</span>
+      <button class="tool-card" onclick="closeToolsMenu();clearLastAnnot()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+        <span>Borrar última</span>
       </button>
       <button class="tool-card" onclick="closeToolsMenu();openMerge()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg>
@@ -352,39 +352,10 @@ body.present #presentHint{display:flex}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span id="sigDateLbl">Fecha en firma</span>
       </button>
-      <button class="tool-card" onclick="closeToolsMenu();toggleSelectMode()" id="selectModeBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M4 4l7 19 3-8 8-3z"/><circle cx="18" cy="18" r="4" stroke-dasharray="2 2"/></svg>
-        <span id="selectModeLbl">Selec. anotación</span>
+      <button class="tool-card" style="color:var(--acc2);border-color:rgba(239,91,138,.3)" onclick="closeToolsMenu();clearPageAnnots()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        <span>Borrar pág.</span>
       </button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal rellenar formulario -->
-<div id="formFillM" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
-  <div class="ssheet">
-    <div class="shandle"></div>
-    <div class="shdr"><span class="shtitle">Rellenar formulario</span><button class="shclose" onclick="closeFormFill()">X</button></div>
-    <div id="formFieldsList" style="padding:12px 16px;max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
-      <p style="font-size:.78rem;color:var(--mut);text-align:center">Detectando campos...</p>
-    </div>
-    <div class="shact">
-      <button class="shbtn" onclick="closeFormFill()">Cancelar</button>
-      <button class="shbtn p" onclick="applyFormFields()">Aplicar campos</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal editar anotación seleccionada -->
-<div id="editAnnotM" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px)">
-  <div class="ssheet">
-    <div class="shandle"></div>
-    <div class="shdr"><span class="shtitle">Editar anotación</span><button class="shclose" onclick="closeEditAnnot()">X</button></div>
-    <div style="padding:16px;display:flex;flex-direction:column;gap:10px" id="editAnnotBody"></div>
-    <div class="shact">
-      <button class="shbtn" style="color:var(--acc2);border-color:var(--acc2)" onclick="deleteSelectedAnnot()">Eliminar</button>
-      <button class="shbtn" onclick="closeEditAnnot()">Cancelar</button>
-      <button class="shbtn p" onclick="saveEditAnnot()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1210,27 +1181,76 @@ function ensureCV(){
 
 function openScanner(){
   if(!isPro&&getUsos()>=USOS_GRATIS){openPro(true);return;}
+
+  // Limpiar estado anterior
+  if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null;}
   scannedPages=[];
-  document.getElementById('scanM').classList.add('open');
+  flashOn=false;
+
+  // Mostrar modal inmediatamente
+  var scanEl=document.getElementById('scanM');
+  scanEl.style.display='flex'; // forzar sin depender de .open
+  scanEl.classList.add('open');
   document.getElementById('scanHint').textContent='Iniciando camara...';
   document.getElementById('scanShot').style.opacity='0.4';
-  navigator.mediaDevices.getUserMedia({
-    video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false
-  }).then(function(stream){
-    scanStream=stream;
-    var video=document.getElementById('scanVideo');
-    video.srcObject=stream;
-    video.onloadedmetadata=function(){
-      video.play();
-      setTimeout(function(){
-        document.getElementById('scanShot').style.opacity='1';
-        document.getElementById('scanHint').textContent='Centra el documento y dispara';
-      },800);
-    };
+  document.getElementById('scanShot').style.pointerEvents='none';
+
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    toast('Tu navegador no soporta acceso a la camara','err');
+    scanEl.classList.remove('open');scanEl.style.display='';
+    return;
+  }
+
+  // Intentar primero con camara trasera de alta resolución
+  function tryCamera(constraints){
+    return navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
+      scanStream=stream;
+      var video=document.getElementById('scanVideo');
+      video.srcObject=null;
+      video.srcObject=stream;
+      return new Promise(function(resolve){
+        video.onloadedmetadata=function(){
+          video.play().then(resolve).catch(resolve);
+        };
+        video.onerror=function(){resolve();};
+        // Timeout por si onloadedmetadata no dispara
+        setTimeout(resolve,3000);
+      });
+    });
+  }
+
+  // Constraints en orden de preferencia: trasera HD → trasera → cualquiera
+  var constraintsList=[
+    {video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false},
+    {video:{facingMode:'environment'},audio:false},
+    {video:true,audio:false}
+  ];
+
+  var attempt=Promise.reject();
+  constraintsList.forEach(function(c){
+    attempt=attempt.catch(function(){return tryCamera(c);});
+  });
+
+  attempt.then(function(){
+    if(!scanStream){
+      toast('No se pudo acceder a la camara','err');
+      document.getElementById('scanM').classList.remove('open');
+      document.getElementById('scanM').style.display='';
+      return;
+    }
+    setTimeout(function(){
+      document.getElementById('scanShot').style.opacity='1';
+      document.getElementById('scanShot').style.pointerEvents='';
+      document.getElementById('scanHint').textContent='Centra el documento y dispara';
+    },600);
     ensureCV();
   }).catch(function(err){
-    toast('No se puede acceder a la camara','err');
+    var msg='No se puede acceder a la camara';
+    if(err&&err.name==='NotAllowedError') msg='Permiso de camara denegado - actívalo en ajustes';
+    if(err&&err.name==='NotFoundError') msg='No se encontró cámara en este dispositivo';
+    toast(msg,'err');
     document.getElementById('scanM').classList.remove('open');
+    document.getElementById('scanM').style.display='';
   });
 }
 
@@ -1826,192 +1846,33 @@ function compressPDF(){
 }
 
 // ── 3. RELLENAR CAMPOS DE FORMULARIO ──
-var formFieldsData=[];
-function openFormFill(){
+// ── BORRAR ÚLTIMA ANOTACIÓN ──
+function clearLastAnnot(){
   if(!pdfDoc){toast('Abre un PDF primero','err');return;}
-  document.getElementById('formFillM').style.display='flex';
-  var list=document.getElementById('formFieldsList');
-  list.innerHTML='<p style="font-size:.78rem;color:var(--mut);text-align:center">Detectando campos...</p>';
-  formFieldsData=[];
-  pdfDoc.getPage(curPage).then(function(page){
-    return page.getAnnotations();
-  }).then(function(annotations){
-    var fields=annotations.filter(function(a){
-      return a.subtype==='Widget'&&(a.fieldType==='Tx'||a.fieldType==='Btn'||a.fieldType==='Ch');
-    });
-    list.innerHTML='';
-    if(!fields.length){
-      // Si no hay campos nativos, detectar zonas de texto en blanco como campos potenciales
-      list.innerHTML='<p style="font-size:.78rem;color:var(--mut);text-align:center;padding:8px">Este PDF no tiene campos de formulario nativos.<br><br>Usa la herramienta TEXTO para escribir encima del documento.</p>';
+  // Buscar la última anotación de la página actual
+  for(var i=paths.length-1;i>=0;i--){
+    if(paths[i].page===curPage){
+      paths.splice(i,1);
+      redraw();
+      toast('Última anotación borrada','ok');
       return;
     }
-    fields.forEach(function(f,i){
-      formFieldsData.push(f);
-      var label=f.fieldName||f.alternativeText||('Campo '+(i+1));
-      var wrap=document.createElement('div');
-      wrap.style.cssText='display:flex;flex-direction:column;gap:4px';
-      var lbl=document.createElement('label');
-      lbl.style.cssText='font-size:.73rem;color:var(--mut);font-family:"DM Mono",monospace';
-      lbl.textContent=label;
-      var inp=document.createElement('input');
-      inp.type='text';
-      inp.dataset.idx=i;
-      inp.value=f.fieldValue||'';
-      inp.placeholder='Escribe aqui...';
-      inp.style.cssText='background:var(--s3);border:1px solid var(--brd);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:"Syne",sans-serif;font-size:.88rem;outline:none;width:100%';
-      wrap.appendChild(lbl);wrap.appendChild(inp);
-      list.appendChild(wrap);
-    });
-  });
-}
-function closeFormFill(){document.getElementById('formFillM').style.display='none';}
-function applyFormFields(){
-  var inputs=document.querySelectorAll('#formFieldsList input');
-  inputs.forEach(function(inp){
-    var idx=parseInt(inp.dataset.idx);
-    var field=formFieldsData[idx];
-    if(!field||!inp.value.trim())return;
-    // Calcular posición en canvas
-    var vp=field.rect;
-    var x=vp[0]*scale, y=(pdfDoc.getPage?0:0);
-    // Añadir como texto sobre el campo
-    pdfDoc.getPage(curPage).then(function(page){
-      var viewport=page.getViewport({scale:scale});
-      var fieldY=viewport.height-(vp[3]*scale);
-      paths.push({type:'text',color:'#111',x:vp[0]*scale+4,y:fieldY-4,
-        text:inp.value,page:curPage,font:'Arial',size:Math.round((vp[3]-vp[1])*scale*0.65)});
-      redraw();
-    });
-  });
-  closeFormFill();
-  toast('Campos aplicados','ok');
-}
-
-// ── 4. SELECCIONAR Y EDITAR ANOTACIONES ──
-var selectMode=false;
-var selectedAnnotIdx=-1;
-var editAnnotBackup=null;
-
-function toggleSelectMode(){
-  selectMode=!selectMode;
-  document.getElementById('selectModeLbl').textContent=selectMode?'Selec. ON ✓':'Selec. anotación';
-  document.getElementById('selectModeBtn').style.background=selectMode?'rgba(91,95,239,.18)':'';
-  toast(selectMode?'Toca una anotación para editarla':'Modo selección desactivado','ok');
-  if(!selectMode){selectedAnnotIdx=-1;redraw();}
-}
-
-function findAnnotAtPoint(x,y){
-  // Buscar la anotación más cercana al punto tocado en la página actual
-  var best=-1,bestDist=Infinity;
-  paths.forEach(function(p,i){
-    if(p.page!==curPage)return;
-    var dist=Infinity;
-    if(p.type==='text'||p.type==='sig'){
-      var pw=p.type==='sig'?p.w:120;
-      var ph=p.type==='sig'?p.h:20;
-      var cx2=p.x+pw/2, cy2=p.type==='sig'?p.y+ph/2:p.y-ph/2;
-      dist=Math.sqrt(Math.pow(x-cx2,2)+Math.pow(y-cy2,2));
-      if(dist<Math.max(pw,ph)*0.7)dist=0;
-    }else if(p.pts&&p.pts.length){
-      p.pts.forEach(function(pt){
-        var d=Math.sqrt(Math.pow(x-pt.x,2)+Math.pow(y-pt.y,2));
-        if(d<dist)dist=d;
-      });
-    }
-    if(dist<50&&dist<bestDist){bestDist=dist;best=i;}
-  });
-  return best;
-}
-
-function openEditAnnot(idx){
-  selectedAnnotIdx=idx;
-  var p=paths[idx];
-  editAnnotBackup=JSON.parse(JSON.stringify(p));
-  var body=document.getElementById('editAnnotBody');
-  body.innerHTML='';
-  if(p.type==='text'){
-    var lbl=document.createElement('p');
-    lbl.style.cssText='font-size:.75rem;color:var(--mut)';lbl.textContent='Texto:';
-    var inp=document.createElement('input');
-    inp.id='editAnnotText';inp.type='text';inp.value=p.text;
-    inp.style.cssText='background:var(--s3);border:1px solid var(--brd);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:"Syne",sans-serif;font-size:.88rem;outline:none;width:100%';
-    var sizeRow=document.createElement('div');
-    sizeRow.style.cssText='display:flex;align-items:center;gap:8px';
-    sizeRow.innerHTML='<span style="font-size:.73rem;color:var(--mut);min-width:40px">Tamaño</span><input type="range" id="editAnnotSize" min="8" max="72" value="'+p.size+'" style="flex:1"><span id="editAnnotSizeLbl" style="font-size:.73rem;color:var(--mut);min-width:32px">'+p.size+'px</span>';
-    body.appendChild(lbl);body.appendChild(inp);body.appendChild(sizeRow);
-    setTimeout(function(){
-      document.getElementById('editAnnotSize').oninput=function(){
-        document.getElementById('editAnnotSizeLbl').textContent=this.value+'px';
-      };
-    },50);
-  }else if(p.type==='draw'||p.type==='highlight'){
-    var info=document.createElement('p');
-    info.style.cssText='font-size:.82rem;color:var(--mut);text-align:center;padding:8px';
-    info.textContent=(p.type==='draw'?'Trazo dibujado':'Resaltado')+' - puedes eliminarlo o mantenerlo';
-    body.appendChild(info);
-  }else if(p.type==='sig'){
-    var info=document.createElement('p');
-    info.style.cssText='font-size:.82rem;color:var(--mut);text-align:center;padding:8px';
-    info.textContent='Firma colocada en esta página';
-    body.appendChild(info);
   }
-  document.getElementById('editAnnotM').style.display='flex';
-  // Resaltar la anotación seleccionada
+  toast('No hay anotaciones en esta página','err');
+}
+
+// ── BORRAR TODAS LAS ANOTACIONES DE LA PÁGINA ──
+function clearPageAnnots(){
+  if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+  var count=paths.filter(function(p){return p.page===curPage;}).length;
+  if(!count){toast('No hay anotaciones en esta página','err');return;}
+  if(!confirm('¿Borrar las '+count+' anotaciones de esta página?'))return;
+  paths=paths.filter(function(p){return p.page!==curPage;});
   redraw();
-  if(p.type==='text'){
-    annX.save();
-    var fs=Math.round(p.size*scale);
-    annX.font=fs+'px '+(p.font||'Arial');
-    var tw=annX.measureText(p.text).width;
-    annX.strokeStyle='#f0c040';annX.lineWidth=2;annX.setLineDash([4,3]);
-    annX.strokeRect(p.x-3,p.y-fs-3,tw+6,fs+8);
-    annX.setLineDash([]);annX.restore();
-  }
-}
-function closeEditAnnot(){
-  document.getElementById('editAnnotM').style.display='none';
-  selectedAnnotIdx=-1;redraw();
-}
-function saveEditAnnot(){
-  if(selectedAnnotIdx<0)return;
-  var p=paths[selectedAnnotIdx];
-  if(p.type==='text'){
-    var inp=document.getElementById('editAnnotText');
-    var sizeInp=document.getElementById('editAnnotSize');
-    if(inp)p.text=inp.value;
-    if(sizeInp)p.size=parseInt(sizeInp.value);
-  }
-  closeEditAnnot();
-  redraw();
-  toast('Anotación actualizada','ok');
-}
-function deleteSelectedAnnot(){
-  if(selectedAnnotIdx<0)return;
-  paths.splice(selectedAnnotIdx,1);
-  closeEditAnnot();
-  redraw();
-  toast('Anotación eliminada','ok');
+  toast(count+' anotaciones borradas','ok');
 }
 
-// Interceptar tap en select mode
-var _origTouchStartIxC=ixC.ontouchstart;
-ixC.addEventListener('touchstart',function(e){
-  if(!selectMode||activeText||activeSig)return;
-  if(e.touches.length===1){
-    var p=evXY(e.touches[0]);
-    var idx=findAnnotAtPoint(p.x,p.y);
-    if(idx>=0){e.preventDefault();e.stopImmediatePropagation();openEditAnnot(idx);}
-  }
-},{passive:false,capture:true});
-
-ixC.addEventListener('click',function(e){
-  if(!selectMode||activeText||activeSig)return;
-  var p=evXY(e);
-  var idx=findAnnotAtPoint(p.x,p.y);
-  if(idx>=0)openEditAnnot(idx);
-});
-
-// ── 5. ZOOM CON DOBLE TOQUE ──
+// ── ZOOM CON DOBLE TOQUE ──
 var lastTap=0;
 var zoomDefault=1.0;
 ixC.addEventListener('touchend',function(e){
@@ -2033,12 +1894,10 @@ ixC.addEventListener('touchend',function(e){
 },{passive:true});
 
 ixC.addEventListener('dblclick',function(e){
-  if(!selectMode){
-    cssZ=Math.abs(cssZ-zoomDefault)<0.05?2.0:zoomDefault;
-    cwEl.style.transform='scale('+cssZ+')';
-    cwEl.style.transformOrigin='top center';
-    document.getElementById('zLbl').textContent=Math.round(cssZ*100)+'%';
-  }
+  cssZ=Math.abs(cssZ-zoomDefault)<0.05?2.0:zoomDefault;
+  cwEl.style.transform='scale('+cssZ+')';
+  cwEl.style.transformOrigin='top center';
+  document.getElementById('zLbl').textContent=Math.round(cssZ*100)+'%';
 });
 
 // ── 4. COMBINAR PDFs ──
