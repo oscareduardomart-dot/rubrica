@@ -2849,19 +2849,20 @@
       var ctx = c.getContext('2d');
       ctx.drawImage(video, 0, 0, c.width, c.height);
 
-      // Verificación rápida de si la imagen es negra (opcional para debug, pero aquí guardamos)
-      currentPhoto = { canvas: c };
-
-      // Ocultar camara
-      document.getElementById('scanM').classList.remove('open');
-
-      // Abrir editor con un pequeño delay para asegurar transiciones suaves
-      setTimeout(function () {
-        openCropEditor(c);
-      }, 100);
+      // Convertir a DataURL para "congelar" el frame y evitar problemas de renderizado
+      var data = c.toDataURL('image/jpeg', 0.9);
+      var img = new Image();
+      img.onload = function () {
+        currentPhoto = { canvas: c, img: img };
+        document.getElementById('scanM').classList.remove('open');
+        setTimeout(function () {
+          openCropEditor(img);
+        }, 100);
+      };
+      img.src = data;
     }
 
-    function openCropEditor(photoCanvas) {
+    function openCropEditor(photoImg) {
       var cvm = document.getElementById('cropM');
       var cropC = document.getElementById('cropCanvas');
       var wrap = document.getElementById('cropWrap');
@@ -2877,11 +2878,14 @@
         var barH = bar.offsetHeight || 160;
         var availH = Math.max(200, window.innerHeight - barH);
 
-        var ratio = Math.min(availW / photoCanvas.width, availH / photoCanvas.height);
-        cropDispW = Math.round(photoCanvas.width * ratio);
-        cropDispH = Math.round(photoCanvas.height * ratio);
-        cropImgW = photoCanvas.width;
-        cropImgH = photoCanvas.height;
+        var pW = photoImg.naturalWidth || photoImg.width;
+        var pH = photoImg.naturalHeight || photoImg.height;
+
+        var ratio = Math.min(availW / pW, availH / pH);
+        cropDispW = Math.round(pW * ratio);
+        cropDispH = Math.round(pH * ratio);
+        cropImgW = pW;
+        cropImgH = pH;
 
         var offX = Math.round((availW - cropDispW) / 2);
         var offY = Math.round((availH - cropDispH) / 2);
@@ -2898,7 +2902,7 @@
         cropC.style.top = offY + 'px';
 
         var ctx2 = cropC.getContext('2d');
-        ctx2.drawImage(photoCanvas, 0, 0, cropDispW, cropDispH);
+        ctx2.drawImage(photoImg, 0, 0, cropDispW, cropDispH);
 
         var svg = document.getElementById('cropOverlay');
         svg.style.left = offX + 'px';
@@ -2919,7 +2923,7 @@
 
         ensureCV().then(function () {
           try {
-            var pts = detectDocumentCorners(photoCanvas);
+            var pts = detectDocumentCorners(photoImg);
             if (pts && pts.length === 4) {
               cropPoints = pts.map(function (p) {
                 return { x: Math.round(p.x * ratio), y: Math.round(p.y * ratio) };
@@ -2929,7 +2933,7 @@
             }
           } catch (e) { }
         });
-      }, 50);
+      }, 150); // Un poco mas de tiempo para que el modal se asiente
     }
 
     function detectDocumentCorners(canvas) {
