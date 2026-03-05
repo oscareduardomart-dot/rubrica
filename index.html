@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -1182,14 +1182,12 @@ function ensureCV(){
 function openScanner(){
   if(!isPro&&getUsos()>=USOS_GRATIS){openPro(true);return;}
 
-  // Limpiar estado anterior
   if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null;}
   scannedPages=[];
   flashOn=false;
 
-  // Mostrar modal inmediatamente
   var scanEl=document.getElementById('scanM');
-  scanEl.style.display='flex'; // forzar sin depender de .open
+  scanEl.style.display='flex';
   scanEl.classList.add('open');
   document.getElementById('scanHint').textContent='Iniciando camara...';
   document.getElementById('scanShot').style.opacity='0.4';
@@ -1197,61 +1195,53 @@ function openScanner(){
 
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     toast('Tu navegador no soporta acceso a la camara','err');
-    scanEl.classList.remove('open');scanEl.style.display='';
+    scanEl.classList.remove('open');scanEl.style.display='none';
     return;
   }
 
-  // Intentar primero con camara trasera de alta resolución
-  function tryCamera(constraints){
-    return navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
-      scanStream=stream;
-      var video=document.getElementById('scanVideo');
-      video.srcObject=null;
-      video.srcObject=stream;
-      return new Promise(function(resolve){
-        video.onloadedmetadata=function(){
-          video.play().then(resolve).catch(resolve);
-        };
-        video.onerror=function(){resolve();};
-        // Timeout por si onloadedmetadata no dispara
-        setTimeout(resolve,3000);
-      });
-    });
-  }
-
-  // Constraints en orden de preferencia: trasera HD → trasera → cualquiera
-  var constraintsList=[
-    {video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false},
-    {video:{facingMode:'environment'},audio:false},
-    {video:true,audio:false}
-  ];
-
-  var attempt=Promise.reject();
-  constraintsList.forEach(function(c){
-    attempt=attempt.catch(function(){return tryCamera(c);});
-  });
-
-  attempt.then(function(){
-    if(!scanStream){
-      toast('No se pudo acceder a la camara','err');
-      document.getElementById('scanM').classList.remove('open');
-      document.getElementById('scanM').style.display='';
-      return;
-    }
+  function onCameraReady(){
     setTimeout(function(){
       document.getElementById('scanShot').style.opacity='1';
       document.getElementById('scanShot').style.pointerEvents='';
       document.getElementById('scanHint').textContent='Centra el documento y dispara';
-    },600);
+    },500);
     ensureCV();
-  }).catch(function(err){
+  }
+
+  function onCameraError(err){
+    scanEl.classList.remove('open');scanEl.style.display='none';
     var msg='No se puede acceder a la camara';
-    if(err&&err.name==='NotAllowedError') msg='Permiso de camara denegado - actívalo en ajustes';
-    if(err&&err.name==='NotFoundError') msg='No se encontró cámara en este dispositivo';
+    if(err&&err.name==='NotAllowedError') msg='Permiso de camara denegado';
+    else if(err&&err.name==='NotFoundError') msg='No se encontro camara';
     toast(msg,'err');
-    document.getElementById('scanM').classList.remove('open');
-    document.getElementById('scanM').style.display='';
-  });
+  }
+
+  function startStream(constraints){
+    navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
+      scanStream=stream;
+      var video=document.getElementById('scanVideo');
+      video.srcObject=stream;
+      video.onloadedmetadata=function(){
+        video.play().catch(function(){});
+        onCameraReady();
+      };
+      // fallback por si onloadedmetadata no dispara en algunos moviles
+      setTimeout(function(){
+        if(video.readyState>=2) onCameraReady();
+      },2500);
+    }).catch(function(e){
+      // si falla con HD, intentar sin restricciones de resolucion
+      if(constraints.video&&constraints.video.width){
+        startStream({video:{facingMode:'environment'},audio:false});
+      } else if(constraints.video&&constraints.video.facingMode){
+        startStream({video:true,audio:false});
+      } else {
+        onCameraError(e);
+      }
+    });
+  }
+
+  startStream({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false});
 }
 
 function closeScanner(){
