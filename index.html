@@ -94,18 +94,20 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidde
 .shbtn{flex:1;padding:12px;border-radius:11px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer}
 .shbtn.p{background:linear-gradient(130deg,var(--acc),#8b8ff8);border-color:transparent;color:#fff}
 #scanM{display:none;position:fixed;inset:0;background:#000;z-index:250;flex-direction:column}
-#scanVideo{width:100%;flex:1;object-fit:cover;display:block}
+#scanM.open{display:flex}
+#scanVideo{width:100%;flex:1;object-fit:cover}
 #scanBar{padding:12px 16px calc(12px + var(--safe-b));background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
 #scanShot{width:64px;height:64px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.15);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 #scanShot:active{transform:scale(.9)}
 #scanClose{position:absolute;top:calc(var(--safe-t)+12px);left:14px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.5);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #scanHint{font-size:.75rem;color:rgba(255,255,255,.7);font-family:'DM Mono',monospace;text-align:center;flex:1}
-#cropM{display:none;position:fixed;inset:0;background:#111;z-index:260;flex-direction:column}
-#cropImgWrap{flex:1;position:relative;overflow:hidden;background:#000;min-height:0}
-#cropCanvas{display:block;position:absolute}
-#cropOverlay{position:absolute;top:0;left:0;pointer-events:none;z-index:2}
-.crop-pt{width:36px;height:36px;border-radius:50%;background:var(--acc);border:3px solid #fff;position:absolute;transform:translate(-50%,-50%);touch-action:none;z-index:10;box-shadow:0 2px 10px rgba(0,0,0,.6)}
-#cropBar{padding:14px 20px calc(14px + var(--safe-b));background:rgba(0,0,0,.95);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+#cropM{display:none;position:fixed;inset:0;background:#000;z-index:260;flex-direction:column}
+#cropM.open{display:flex}
+#cropWrap{position:relative;flex:1;width:100%;min-height:0;background:#000;overflow:hidden}
+#cropCanvas{position:absolute;top:0;left:0;display:block}
+#cropOverlay{position:absolute;top:0;left:0;pointer-events:none;z-index:2;overflow:visible}
+.crop-pt{width:36px;height:36px;border-radius:50%;background:var(--acc);border:3px solid #fff;position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;box-shadow:0 2px 14px rgba(0,0,0,.7);z-index:10}
+#cropBar{padding:14px 20px calc(14px + var(--safe-b));background:rgba(0,0,0,.9);display:flex;flex-direction:column;gap:8px;flex-shrink:0;width:100%}
 .cropBtns{display:flex;gap:10px}
 .crop-btn{flex:1;padding:13px;border-radius:11px;border:1px solid var(--brd);background:var(--s2);color:var(--txt);font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer}
 .crop-btn.p{background:linear-gradient(130deg,var(--acc),#8b8ff8);border-color:transparent;color:#fff}
@@ -423,21 +425,22 @@ body.present #presentHint{display:flex}
 <div id="scanM">
   <video id="scanVideo" autoplay playsinline muted></video>
   <div id="scanBar">
-    <button id="flashBtn" onclick="toggleFlash()" style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.4);color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+    <button id="flashBtn" onclick="toggleFlash()" title="Flash" style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.4);color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
       <svg id="flashIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     </button>
-    <span id="scanHint" style="flex:1;text-align:center">Iniciando camara...</span>
-    <button id="scanShot" onclick="takeShot()" style="opacity:0.4">
+    <span id="scanHint" style="flex:1;text-align:center">Centra el documento y dispara</span>
+    <button id="scanShot" onclick="takeShot()">
       <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><circle cx="12" cy="12" r="6"/></svg>
     </button>
   </div>
-  <button id="scanClose" onclick="closeScanner()">✕</button>
+  <button id="scanClose" onclick="closeScanner()">X</button>
 </div>
 
+<!-- Editor recorte / perspectiva -->
 <div id="cropM">
-  <div id="cropImgWrap">
+  <div id="cropWrap">
     <canvas id="cropCanvas"></canvas>
-    <svg id="cropOverlay"></svg>
+    <svg id="cropOverlay" style="position:absolute;top:0;left:0;pointer-events:none;z-index:2"></svg>
     <div class="crop-pt" id="pt0"></div>
     <div class="crop-pt" id="pt1"></div>
     <div class="crop-pt" id="pt2"></div>
@@ -447,13 +450,13 @@ body.present #presentHint{display:flex}
     <span id="cropInfo">Ajusta las esquinas del documento</span>
     <div class="filter-row">
       <button class="filter-pill on" data-f="color" onclick="setScanFilter(this)">Color</button>
-      <button class="filter-pill" data-f="bw" onclick="setScanFilter(this)">B&N</button>
+      <button class="filter-pill" data-f="bw" onclick="setScanFilter(this)">B&amp;N</button>
       <button class="filter-pill" data-f="contrast" onclick="setScanFilter(this)">Contraste</button>
       <button class="filter-pill" data-f="sepia" onclick="setScanFilter(this)">Sepia</button>
     </div>
     <div class="cropBtns">
-      <button class="crop-btn" onclick="rejectCrop()">Repetir</button>
-      <button class="crop-btn p" onclick="applyCrop()">Usar imagen</button>
+      <button class="crop-btn" onclick="rejectCrop()">Repetir foto</button>
+      <button class="crop-btn p" onclick="applyCrop()">Aplicar recorte</button>
     </div>
   </div>
 </div>
@@ -1239,9 +1242,16 @@ function openScanner(){
   scannedPages=[];
   flashOn=false;
 
-  document.getElementById('scanM').style.display='flex';
+  var scanM = document.getElementById('scanM');
+  scanM.classList.add('open');
   document.getElementById('scanHint').textContent='Iniciando camara...';
   document.getElementById('scanShot').style.opacity='0.4';
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('Tu navegador no permite el acceso a la camara (necesitas HTTPS)','err');
+    scanM.classList.remove('open');
+    return;
+  }
 
   navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
   .catch(function(){
@@ -1262,6 +1272,7 @@ function openScanner(){
 }
 
 function closeScanner(){
+  // Apagar flash si estaba encendido
   if(flashOn&&scanStream){
     var track=scanStream.getVideoTracks()[0];
     if(track&&track.getCapabilities&&track.getCapabilities().torch){
@@ -1269,108 +1280,125 @@ function closeScanner(){
     }
     flashOn=false;
   }
-  if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null;}
-  document.getElementById('scanM').style.display='none';
-  if(scannedPages.length>0) buildScanPDF();
+  if(scanStream)scanStream.getTracks().forEach(function(t){t.stop()});
+  scanStream=null;
+  document.getElementById('scanM').classList.remove('open');
+  // Si hay paginas escaneadas, crear el PDF
+  if(scannedPages.length>0){
+    buildScanPDF();
+  }
 }
 
 function takeShot(){
   var video=document.getElementById('scanVideo');
+
   if(!video.videoWidth||!video.videoHeight){
     toast('Camara iniciando, espera...','err');
     return;
   }
 
-  // Capturar frame
+  // Flash visual
+  var fl=document.createElement('div');
+  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.7;z-index:9999;pointer-events:none;transition:opacity .15s';
+  document.body.appendChild(fl);
+  setTimeout(function(){fl.style.opacity='0';setTimeout(function(){fl.remove();},150);},80);
+
+  // Capturar frame del video en canvas temporal
   var c=document.createElement('canvas');
   c.width=video.videoWidth;
   c.height=video.videoHeight;
-  c.getContext('2d').drawImage(video,0,0);
+  var ctx=c.getContext('2d');
+  ctx.drawImage(video,0,0,c.width,c.height);
+
   currentPhoto={canvas:c};
 
-  // Parar camara
-  if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null;}
+  // Ocultar camara ANTES de abrir editor
+  document.getElementById('scanM').classList.remove('open');
 
-  // Flash blanco
-  var fl=document.createElement('div');
-  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.9;z-index:9999;pointer-events:none';
-  document.body.appendChild(fl);
-  setTimeout(function(){fl.remove();},150);
-
-  // Mostrar editor
-  document.getElementById('scanM').style.display='none';
-  document.getElementById('cropM').style.display='flex';
-
-  setTimeout(function(){ openCropEditor(c); }, 100);
+  // Pequeña pausa para que el DOM se actualice antes de manipular canvas
+  setTimeout(function(){
+    openCropEditor(c);
+  },60);
 }
 
 function openCropEditor(photoCanvas){
-  var wrap=document.getElementById('cropImgWrap');
-  var bar=document.getElementById('cropBar');
+  var cvm=document.getElementById('cropM');
   var cropC=document.getElementById('cropCanvas');
-  var svg=document.getElementById('cropOverlay');
+  var wrap=document.getElementById('cropWrap');
+  var bar=document.getElementById('cropBar');
 
-  // Medir espacio disponible
-  var W=window.innerWidth;
-  var H=window.innerHeight-(bar.offsetHeight||160);
-  if(H<50) H=window.innerHeight*0.65;
+  // Mostrar modal primero para poder medir
+  cvm.classList.add('open');
 
-  // Escalar imagen para que quepa
-  var r=Math.min(W/photoCanvas.width, H/photoCanvas.height);
-  cropDispW=Math.round(photoCanvas.width*r);
-  cropDispH=Math.round(photoCanvas.height*r);
-  cropImgW=photoCanvas.width;
-  cropImgH=photoCanvas.height;
+  // Esperar a que el DOM esté pintado con doble rAF
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
 
-  // Offset para centrar
-  cropCanvasOffX=Math.floor((W-cropDispW)/2);
-  cropCanvasOffY=Math.floor((H-cropDispH)/2);
-  if(cropCanvasOffX<0)cropCanvasOffX=0;
-  if(cropCanvasOffY<0)cropCanvasOffY=0;
+    // Medir espacio disponible para la imagen
+    var availW=window.innerWidth;
+    var barH=bar.offsetHeight||160;
+    var availH=window.innerHeight - barH;
 
-  // Ajustar wrap
-  wrap.style.height=H+'px';
-  wrap.style.width='100%';
+    // Calcular ratio para que la imagen quepa entera
+    var ratio=Math.min(availW/photoCanvas.width, availH/photoCanvas.height);
+    cropDispW=Math.round(photoCanvas.width*ratio);
+    cropDispH=Math.round(photoCanvas.height*ratio);
+    cropImgW=photoCanvas.width;
+    cropImgH=photoCanvas.height;
 
-  // Canvas: tamaño interno y posición visual
-  cropC.width=cropDispW;
-  cropC.height=cropDispH;
-  cropC.style.left=cropCanvasOffX+'px';
-  cropC.style.top=cropCanvasOffY+'px';
-  cropC.style.width=cropDispW+'px';
-  cropC.style.height=cropDispH+'px';
+    // Centrar imagen en el área disponible
+    var offX=Math.round((availW-cropDispW)/2);
+    var offY=Math.round((availH-cropDispH)/2);
+    cropCanvasOffX=offX;
+    cropCanvasOffY=offY;
 
-  // Dibujar imagen
-  cropC.getContext('2d').drawImage(photoCanvas,0,0,cropDispW,cropDispH);
+    // Ajustar wrap a exactamente el espacio disponible
+    wrap.style.height=availH+'px';
 
-  // SVG alineado
-  svg.style.left=cropCanvasOffX+'px';
-  svg.style.top=cropCanvasOffY+'px';
-  svg.setAttribute('width',cropDispW);
-  svg.setAttribute('height',cropDispH);
-  svg.style.width=cropDispW+'px';
-  svg.style.height=cropDispH+'px';
+    // Posicionar canvas con absolute dentro del wrap
+    cropC.width=cropDispW;
+    cropC.height=cropDispH;
+    cropC.style.width=cropDispW+'px';
+    cropC.style.height=cropDispH+'px';
+    cropC.style.left=offX+'px';
+    cropC.style.top=offY+'px';
 
-  // Puntos de esquina por defecto
-  var mx=Math.round(cropDispW*0.08), my=Math.round(cropDispH*0.08);
-  cropPoints=[
-    {x:mx,           y:my},
-    {x:cropDispW-mx, y:my},
-    {x:cropDispW-mx, y:cropDispH-my},
-    {x:mx,           y:cropDispH-my}
-  ];
-  updateCropUI();
-  document.getElementById('cropInfo').textContent='Ajusta las esquinas';
+    // Dibujar la imagen
+    var ctx2=cropC.getContext('2d');
+    ctx2.drawImage(photoCanvas,0,0,cropDispW,cropDispH);
 
-  // OpenCV en segundo plano (no bloquea)
-  ensureCV().then(function(){
-    try{
-      var pts=detectDocumentCorners(photoCanvas);
-      cropPoints=pts.map(function(p){return{x:Math.round(p.x*r),y:Math.round(p.y*r)};});
-      updateCropUI();
-      document.getElementById('cropInfo').textContent='Documento detectado';
-    }catch(e){}
-  }).catch(function(){});
+    // Ajustar SVG overlay igual que el canvas
+    var svg=document.getElementById('cropOverlay');
+    svg.style.left=offX+'px';
+    svg.style.top=offY+'px';
+    svg.setAttribute('width',cropDispW);
+    svg.setAttribute('height',cropDispH);
+    svg.style.width=cropDispW+'px';
+    svg.style.height=cropDispH+'px';
+
+    // Esquinas por defecto
+    var mx=Math.round(cropDispW*0.08), my=Math.round(cropDispH*0.08);
+    cropPoints=[
+      {x:mx,           y:my},
+      {x:cropDispW-mx, y:my},
+      {x:cropDispW-mx, y:cropDispH-my},
+      {x:mx,           y:cropDispH-my}
+    ];
+    updateCropUI();
+    document.getElementById('cropInfo').textContent='Ajusta las esquinas del documento';
+
+    // OpenCV en segundo plano
+    ensureCV().then(function(){
+      try{
+        var pts=detectDocumentCorners(photoCanvas);
+        cropPoints=pts.map(function(p){
+          return{x:Math.round(p.x*ratio), y:Math.round(p.y*ratio)};
+        });
+        updateCropUI();
+        document.getElementById('cropInfo').textContent='Documento detectado';
+      }catch(e){}
+    }).catch(function(){});
+
+  });});
 }
 
 function detectDocumentCorners(canvas){
@@ -1478,18 +1506,20 @@ function startDragCropPt(cx,cy,idx){
 }
 
 function rejectCrop(){
-  document.getElementById('cropM').style.display='none';
+  document.getElementById('cropM').classList.remove('open');
+  document.getElementById('scanM').classList.add('open');
   currentPhoto=null;
-  openScanner();
 }
 
 function applyCrop(){
   if(!currentPhoto)return;
   document.getElementById('cropInfo').textContent='Procesando...';
 
+  // Convertir puntos pantalla -> coords imagen original
   var rX=cropImgW/cropDispW, rY=cropImgH/cropDispH;
-  var srcPts=cropPoints.map(function(p){return{x:Math.round(p.x*rX),y:Math.round(p.y*rY)};});
+  var srcPts=cropPoints.map(function(p){return{x:Math.round(p.x*rX),y:Math.round(p.y*rY)}});
 
+  // Calcular dimensiones del doc resultante
   var wTop=dist(srcPts[0],srcPts[1]);
   var wBot=dist(srcPts[3],srcPts[2]);
   var hLeft=dist(srcPts[0],srcPts[3]);
@@ -1499,18 +1529,17 @@ function applyCrop(){
 
   var out=document.createElement('canvas');
   out.width=dstW;out.height=dstH;
-  simpleWarp(out.getContext('2d'),currentPhoto.canvas,srcPts,dstW,dstH);
+  var ctx=out.getContext('2d');
+
+  // Siempre usar canvas nativo para preservar color original
+  // OpenCV solo se usa para detectar esquinas, NO para el warp
+  simpleWarp(ctx,currentPhoto.canvas,srcPts,dstW,dstH);
 
   scannedPages.push(out.toDataURL('image/jpeg',0.92));
-  document.getElementById('cropM').style.display='none';
+  document.getElementById('cropM').classList.remove('open');
+  document.getElementById('scanM').classList.add('open');
+  document.getElementById('scanHint').textContent='Pagina '+scannedPages.length+' lista - Dispara otra o cierra para crear PDF';
   currentPhoto=null;
-
-  // Preguntar si quiere otra página o crear PDF
-  if(confirm('Página '+scannedPages.length+' guardada.\n¿Escanear otra página?')){
-    openScanner();
-  } else {
-    buildScanPDF();
-  }
 }
 
 function dist(a,b){return Math.sqrt(Math.pow(a.x-b.x,2)+Math.pow(a.y-b.y,2));}
