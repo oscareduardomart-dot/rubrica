@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -587,7 +587,6 @@ function watchVideo(){
     if(count<=0){clearInterval(t);document.body.removeChild(modal);resetUsos();toast('+3 usos desbloqueados. Gracias por ver el video','ok');}
   },1000);
 }
-'use strict';
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfDoc=null,pdfRaw=null,curPage=1,totPages=0,scale=1.0;
@@ -1204,12 +1203,13 @@ function toggleFlash(){
     toast('No se pudo activar el flash','err');
   });
 }
-var currentPhoto=null; // {canvas, dataUrl} foto recien tomada
-var scannedPages=[]; // paginas ya procesadas (dataUrl JPEG)
+var currentPhoto=null;
+var scannedPages=[];
 var cvReady=false;
-var cropPoints=[]; // [{x,y}] en coords del cropCanvas
-var cropImgW=0,cropImgH=0; // tamanyo imagen en el canvas
-var cropDispW=0,cropDispH=0; // tamanyo canvas en pantalla
+var cropPoints=[];
+var cropImgW=0,cropImgH=0;
+var cropDispW=0,cropDispH=0;
+var scanStream=null;
 
 // Cargar OpenCV.js de forma diferida (solo cuando se necesita)
 function ensureCV(){
@@ -1235,66 +1235,33 @@ function ensureCV(){
 function openScanner(){
   if(!isPro&&getUsos()>=USOS_GRATIS){openPro(true);return;}
 
-  if(scanStream){scanStream.getTracks().forEach(function(t){t.stop()});scanStream=null;}
+  if(scanStream){
+    scanStream.getTracks().forEach(function(t){t.stop()});
+    scanStream=null;
+  }
   scannedPages=[];
   flashOn=false;
 
-  var scanEl=document.getElementById('scanM');
-  scanEl.style.display='flex';
-  scanEl.classList.add('open');
+  document.getElementById('scanM').style.display='flex';
   document.getElementById('scanHint').textContent='Iniciando camara...';
   document.getElementById('scanShot').style.opacity='0.4';
-  document.getElementById('scanShot').style.pointerEvents='none';
 
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    toast('Tu navegador no soporta acceso a la camara','err');
-    scanEl.classList.remove('open');scanEl.style.display='none';
-    return;
-  }
-
-  function onCameraReady(){
-    setTimeout(function(){
-      document.getElementById('scanShot').style.opacity='1';
-      document.getElementById('scanShot').style.pointerEvents='';
-      document.getElementById('scanHint').textContent='Centra el documento y dispara';
-    },500);
-    ensureCV();
-  }
-
-  function onCameraError(err){
-    scanEl.classList.remove('open');scanEl.style.display='none';
-    var msg='No se puede acceder a la camara';
-    if(err&&err.name==='NotAllowedError') msg='Permiso de camara denegado';
-    else if(err&&err.name==='NotFoundError') msg='No se encontro camara';
-    toast(msg,'err');
-  }
-
-  function startStream(constraints){
-    navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
-      scanStream=stream;
-      var video=document.getElementById('scanVideo');
-      video.srcObject=stream;
-      video.onloadedmetadata=function(){
-        video.play().catch(function(){});
-        onCameraReady();
-      };
-      // fallback por si onloadedmetadata no dispara en algunos moviles
-      setTimeout(function(){
-        if(video.readyState>=2) onCameraReady();
-      },2500);
-    }).catch(function(e){
-      // si falla con HD, intentar sin restricciones de resolucion
-      if(constraints.video&&constraints.video.width){
-        startStream({video:{facingMode:'environment'},audio:false});
-      } else if(constraints.video&&constraints.video.facingMode){
-        startStream({video:true,audio:false});
-      } else {
-        onCameraError(e);
-      }
-    });
-  }
-
-  startStream({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false});
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+  .catch(function(){
+    return navigator.mediaDevices.getUserMedia({video:true,audio:false});
+  })
+  .then(function(stream){
+    scanStream=stream;
+    var v=document.getElementById('scanVideo');
+    v.srcObject=stream;
+    v.play();
+    document.getElementById('scanShot').style.opacity='1';
+    document.getElementById('scanHint').textContent='Centra el documento y dispara';
+  })
+  .catch(function(err){
+    document.getElementById('scanM').style.display='none';
+    toast('Sin acceso a la camara: '+(err.name||err),'err');
+  });
 }
 
 function closeScanner(){
