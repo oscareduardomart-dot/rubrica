@@ -172,6 +172,9 @@ html,body{
 }
 #app.active{display:flex}
 
+/* Right col base */
+#right-col{display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0}
+
 /* Topbar */
 #topbar{
   display:flex;align-items:center;gap:8px;
@@ -274,6 +277,7 @@ html,body{
   display:flex;justify-content:center;align-items:flex-start;
   padding:16px;position:relative;
   -webkit-overflow-scrolling:touch;
+  touch-action:pan-x pan-y;
 }
 #main::-webkit-scrollbar{width:6px;height:6px}
 #main::-webkit-scrollbar-track{background:transparent}
@@ -332,7 +336,7 @@ html,body{
 }
 #pdf-canvas{display:block}
 #ann-canvas{position:absolute;top:0;left:0;pointer-events:none}
-#ix-canvas{position:absolute;top:0;left:0;touch-action:none}
+#ix-canvas{position:absolute;top:0;left:0;touch-action:none;pointer-events:auto;width:100%;height:100%}
 
 /* Floating dock (mobile) */
 #dock{
@@ -838,7 +842,7 @@ html,body{
   </div><!-- /topbar -->
 
   <!-- Right column (desktop wrapper) -->
-  <div id="right-col" style="display:contents">
+  <div id="right-col">
 
   <!-- Toolbar -->
   <div id="toolbar">
@@ -1132,13 +1136,13 @@ const sigCtx      = sigCv.getContext('2d');
 // LANDING / APP TOGGLE
 // ─────────────────────────────────────────────────────────────────────────────
 function showLanding() {
-  $('landing').style.display = 'block';
-  $('app').style.display     = 'none';
+  $('landing').style.display = 'block'; $('app').classList.remove('active');
+  $('app').classList.remove('active');
 }
 function enterApp() {
   localStorage.setItem('rub_visited','1');
   $('landing').style.display = 'none';
-  $('app').style.display     = 'flex';
+  $('app').classList.add('active');
   applyProState();
 }
 
@@ -1153,7 +1157,7 @@ $('landing-file-input').addEventListener('change', function() {
 if (localStorage.getItem('rub_visited') !== '1') {
   showLanding();
 } else {
-  $('app').style.display = 'flex';
+  $('app').classList.add('active');
   applyProState();
 }
 
@@ -1457,12 +1461,14 @@ let drawing = false, lastX = 0, lastY = 0, currentPath = null;
 
 function evXY(e) {
   const rect = ixCv.getBoundingClientRect();
-  const cx = e.touches ? e.touches[0].clientX : e.clientX;
-  const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  // rect ya tiene el tamaño visual real, no necesitamos dividir por cssZoom
-  const scaleX = ixCv.width / PR / rect.width;
-  const scaleY = ixCv.height / PR / rect.height;
-  return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
+  const src = e.changedTouches ? e.changedTouches[0]
+              : e.touches       ? e.touches[0]
+              : e;
+  const cx = src.clientX, cy = src.clientY;
+  // Canvas lógico = canvas.width/PR, tamaño visual = rect.width
+  const sx = (ixCv.width / PR) / rect.width;
+  const sy = (ixCv.height / PR) / rect.height;
+  return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
 }
 
 ixCv.addEventListener('mousedown', startDraw);
@@ -1504,16 +1510,20 @@ function moveDraw(e) {
   if (!drawing || !currentPath) return;
   const p = evXY(e);
   currentPath.points.push({x: p.x, y: p.y});
-  // Live draw
+  // Redibujar todo el trazo actual en ixCv (más limpio y sin artefactos)
+  ixCtx.clearRect(0, 0, ixCv.width, ixCv.height);
+  ixCtx.save();
+  ixCtx.setTransform(PR, 0, 0, PR, 0, 0);
   ixCtx.strokeStyle = currentPath.type === 'highlight'
     ? currentPath.color + '55' : currentPath.color;
-  ixCtx.lineWidth = currentPath.width * PR;
+  ixCtx.lineWidth = currentPath.type === 'highlight' ? 16 : currentPath.width;
   ixCtx.lineCap = 'round'; ixCtx.lineJoin = 'round';
-  ixCtx.setTransform(PR, 0, 0, PR, 0, 0);
   ixCtx.beginPath();
-  ixCtx.moveTo(lastX, lastY);
-  ixCtx.lineTo(p.x, p.y);
+  currentPath.points.forEach((pt, i) =>
+    i === 0 ? ixCtx.moveTo(pt.x, pt.y) : ixCtx.lineTo(pt.x, pt.y)
+  );
   ixCtx.stroke();
+  ixCtx.restore();
   lastX = p.x; lastY = p.y;
 }
 
@@ -1539,6 +1549,7 @@ function endDraw(e) {
 
 function redrawAnnotations() {
   annCtx.clearRect(0, 0, annCv.width, annCv.height);
+  annCtx.save();
   annCtx.setTransform(PR, 0, 0, PR, 0, 0);
 
   paths.filter(p => p.page === curPage).forEach(p => {
@@ -1560,6 +1571,7 @@ function redrawAnnotations() {
     }
   });
 
+  annCtx.restore();
   if (activeSig) drawActiveSig();
 }
 
