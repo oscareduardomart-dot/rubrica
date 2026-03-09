@@ -332,7 +332,7 @@ html,body{
 }
 #pdf-canvas{display:block}
 #ann-canvas{position:absolute;top:0;left:0;pointer-events:none}
-#ix-canvas{position:absolute;top:0;left:0;touch-action:pan-x pan-y}
+#ix-canvas{position:absolute;top:0;left:0;touch-action:none}
 
 /* Floating dock (mobile) */
 #dock{
@@ -1320,7 +1320,8 @@ function loadFile(file) {
       }).then(p1 => {
         const vp = p1.getViewport({scale: 1});
         scale = (mainEl.clientWidth - 32) / vp.width;
-        cssZoom = 1; canvasWrap.style.transform = 'scale(1)';
+        _baseScale = scale;
+        cssZoom = 1; canvasWrap.style.transform = 'none';
         $('zoom-lbl').textContent = '100%';
         $('dropzone').style.display = 'none';
         canvasWrap.style.display = 'block';
@@ -1380,11 +1381,48 @@ function goPage(d) {
 }
 
 function doZoom(d) {
-  cssZoom = Math.max(0.5, Math.min(3, cssZoom + d));
-  canvasWrap.style.transform = `scale(${cssZoom})`;
-  canvasWrap.style.transformOrigin = 'top center';
-  $('zoom-lbl').textContent = Math.round(cssZoom * 100) + '%';
+  if (!pdfDoc) return;
+  const newScale = Math.max(0.3, Math.min(scale * 4, scale + d * scale));
+  scale = newScale;
+  cssZoom = 1;
+  canvasWrap.style.transform = 'none';
+  setLoading(true);
+  renderPage(curPage).then(() => {
+    setLoading(false);
+    $('zoom-lbl').textContent = Math.round((scale / _baseScale) * 100) + '%';
+  });
 }
+
+// Pinch-to-zoom on main (mobile)
+let _pinchDist0 = 0, _scale0 = 1, _baseScale = scale;
+mainEl.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    _pinchDist0 = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    _scale0 = scale;
+    e.preventDefault();
+  }
+}, {passive: false});
+mainEl.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const ratio = d / _pinchDist0;
+    scale = Math.max(0.3, Math.min(_scale0 * 4, _scale0 * ratio));
+    clearTimeout(_pinchRender);
+    _pinchRender = setTimeout(() => {
+      renderPage(curPage).then(() =>
+        $('zoom-lbl').textContent = Math.round((scale / _baseScale) * 100) + '%'
+      );
+    }, 80);
+  }
+}, {passive: false});
+let _pinchRender;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOOLS
@@ -1421,7 +1459,10 @@ function evXY(e) {
   const rect = ixCv.getBoundingClientRect();
   const cx = e.touches ? e.touches[0].clientX : e.clientX;
   const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: (cx - rect.left) / cssZoom, y: (cy - rect.top) / cssZoom };
+  // rect ya tiene el tamaño visual real, no necesitamos dividir por cssZoom
+  const scaleX = ixCv.width / PR / rect.width;
+  const scaleY = ixCv.height / PR / rect.height;
+  return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
 }
 
 ixCv.addEventListener('mousedown', startDraw);
@@ -1443,13 +1484,7 @@ function startDraw(e) {
     return;
   }
   if (placingTxt) {
-    const tx = textOpts;
-    if (!tx.text.trim()) { toast('Escribe un texto primero','err'); return; }
-    paths.push({type:'text', page:curPage, x:p.x, y:p.y, text:tx.text, font:tx.font, size:tx.size, color:tx.color});
-    redrawAnnotations();
-    $('confirm-txt-btn').style.display = 'inline-block';
-    placingTxt = false;
-    $('place-overlay').classList.remove('visible');
+    // se coloca en touchend para evitar doble disparo
     return;
   }
 
@@ -1482,7 +1517,18 @@ function moveDraw(e) {
   lastX = p.x; lastY = p.y;
 }
 
-function endDraw() {
+function endDraw(e) {
+  if (placingTxt && e) {
+    const p = evXY(e.changedTouches ? {clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY} : e);
+    const tx = textOpts;
+    if (tx.text && tx.text.trim()) {
+      paths.push({type:'text', page:curPage, x:p.x, y:p.y, text:tx.text, font:tx.font, size:tx.size, color:tx.color});
+      redrawAnnotations();
+      placingTxt = false;
+      $('place-overlay').classList.remove('visible');
+    }
+    return;
+  }
   if (!drawing || !currentPath) return;
   drawing = false;
   if (currentPath.points.length > 1) paths.push(currentPath);
@@ -1688,10 +1734,24 @@ function confirmPlaceTxt() {
   $('confirm-txt-btn').style.display = 'none';
 }
 
-// Wire text tool: open modal when text tool is active and user taps (not drag)
+// Wire text tool: abre modal en tap (click y touchend corto)
 ixCv.addEventListener('click', e => {
   if (tool === 'text' && !placingTxt) openTextModal();
 });
+// En móvil, touchend sin movimiento = tap
+let _tapStart = null;
+ixCv.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) _tapStart = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+}, {passive: true});
+ixCv.addEventListener('touchend', e => {
+  if (!_tapStart) return;
+  const dx = Math.abs(e.changedTouches[0].clientX - _tapStart.x);
+  const dy = Math.abs(e.changedTouches[0].clientY - _tapStart.y);
+  if (dx < 10 && dy < 10 && tool === 'text' && !placingTxt) {
+    openTextModal();
+  }
+  _tapStart = null;
+}, {passive: true});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SAVE PDF
@@ -2130,7 +2190,8 @@ function buildScanPDF() {
   }).then(p1 => {
     const vp=p1.getViewport({scale:1});
     scale=(mainEl.clientWidth-32)/vp.width;
-    cssZoom=1; canvasWrap.style.transform='scale(1)';
+    _baseScale=scale;
+    cssZoom=1; canvasWrap.style.transform='none';
     $('zoom-lbl').textContent='100%';
     $('dropzone').style.display='none';
     canvasWrap.style.display='block';
