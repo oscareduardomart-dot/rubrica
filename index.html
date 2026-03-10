@@ -295,6 +295,28 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
 #adclose{padding:8px 28px;border-radius:100px;border:none;background:var(--acc);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;opacity:.4;pointer-events:none;transition:all .3s}
 #adclose.ready{opacity:1;pointer-events:all;background:var(--grn)}
 #adtimer{font-size:.65rem;color:rgba(255,255,255,.4);font-family:'JetBrains Mono',monospace}
+
+/* ── PLANTILLAS NUEVO DOC ───────────────────────────────────── */
+/* ── EDITOR TIPO WORD ───────────────────────────────────────── */
+#wordeditor{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}
+#wordeditor.on{display:flex}
+#wetoolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:calc(var(--st)+8px) 10px 8px;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0}
+#wetoolbar .wegrp{display:flex;align-items:center;gap:2px;padding-right:8px;border-right:1px solid var(--bd);margin-right:4px}
+#wetoolbar .wegrp:last-child{border:none;margin:0}
+.webtn{height:30px;min-width:30px;padding:0 7px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;transition:.12s}
+.webtn:hover{background:var(--s3);border-color:var(--bd)}
+.webtn.on{background:rgba(37,99,235,.15);border-color:rgba(37,99,235,.3);color:var(--acc)}
+.wesel{height:30px;padding:0 6px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-size:.75rem;cursor:pointer;outline:none}
+#wearea{flex:1;overflow-y:auto;padding:20px;display:flex;justify-content:center;background:#e8eaed}
+[data-theme="dark"] #wearea{background:#1a1a2a}
+#wepage{width:210mm;min-height:297mm;background:#fff;padding:20mm 25mm;box-shadow:0 2px 20px rgba(0,0,0,.15);outline:none;font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;color:#111;caret-color:#2563eb}
+[data-theme="dark"] #wepage{background:#1e1e2e;color:#e2e8f0}
+#wepage:focus{outline:none}
+#wefoot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--s1);border-top:1px solid var(--bd);flex-shrink:0;gap:8px;flex-wrap:wrap}
+#wecount{font-size:.68rem;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+/* ── MODAL GUARDAR ──────────────────────────────────────────── */
+#savename{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;outline:none;transition:.15s}
+#savename:focus{border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -349,12 +371,16 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
       <svg width="20" height="20" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="#2563eb"/><path d="M7 6h8l4 4v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" fill="white" opacity=".92"/><path d="M15 6l4 4h-4V6z" fill="white" opacity=".5"/><path d="M9 14h8M9 17h5" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>
       <span>Rúbrica</span>
     </div>
+    <button class="tbtn" onclick="openNewDoc()" title="Nuevo documento">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Nuevo</span>
+    </button>
     <label class="tbtn" title="Abrir PDF">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span>Abrir PDF</span>
       <input type="file" id="fi" accept="application/pdf,.pdf">
     </label>
-    <button class="tbtn acc" id="savebtn" style="display:none" onclick="savePDF()">
+    <button class="tbtn acc" id="savebtn" style="display:none" onclick="openSaveModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       <span>Guardar</span>
     </button>
@@ -490,6 +516,145 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <span style="font-size:.65rem;color:var(--tx3);font-family:'JetBrains Mono',monospace">ESPACIO PUBLICITARIO</span>
   </div>
 </div>
+
+
+<!-- Modal guardar PDF -->
+<div class="backdrop" id="savemodal">
+  <div class="sheet">
+    <div class="shdl"></div>
+    <div class="shh">
+      <span class="sht">Guardar PDF</span>
+      <button class="shx" onclick="closeSaveModal()">✕</button>
+    </div>
+    <div style="padding:12px 14px 4px">
+      <p style="font-size:.75rem;color:var(--tx2);margin-bottom:7px">Nombre del archivo:</p>
+      <input id="savename" type="text" placeholder="mi-documento" value="documento-firmado"
+        onkeydown="if(event.key==='Enter') doSaveWithName()">
+      <p style="font-size:.68rem;color:var(--tx3);margin-top:5px">.pdf se añade automáticamente</p>
+    </div>
+    <div class="sha" style="margin-top:8px">
+      <button class="shb" onclick="closeSaveModal()">Cancelar</button>
+      <button class="shb" onclick="doSaveWithName(true)" style="color:var(--acc);border-color:rgba(37,99,235,.3)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Compartir
+      </button>
+      <button class="shb p" onclick="doSaveWithName()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Editor tipo Word -->
+<div id="wordeditor">
+
+  <!-- Toolbar -->
+  <div id="wetoolbar">
+
+    <div class="wegrp">
+      <button class="webtn" title="Volver" onclick="closeWordEditor()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+
+    <div class="wegrp">
+      <select class="wesel" id="wefont" onchange="weCmd('fontName',this.value)" style="width:110px">
+        <option value="Arial">Arial</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Helvetica">Helvetica</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Trebuchet MS">Trebuchet MS</option>
+      </select>
+      <select class="wesel" id="wesize" onchange="weCmd('fontSize',this.value)" style="width:56px">
+        <option value="1">8</option>
+        <option value="2">10</option>
+        <option value="3" selected>12</option>
+        <option value="4">14</option>
+        <option value="5">18</option>
+        <option value="6">24</option>
+        <option value="7">36</option>
+      </select>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" id="we-bold" title="Negrita (Ctrl+B)" onclick="weCmd('bold')"><b>N</b></button>
+      <button class="webtn" id="we-italic" title="Cursiva (Ctrl+I)" onclick="weCmd('italic')"><i>C</i></button>
+      <button class="webtn" id="we-underline" title="Subrayado (Ctrl+U)" onclick="weCmd('underline')" style="text-decoration:underline">S</button>
+      <button class="webtn" id="we-strikethrough" title="Tachado" onclick="weCmd('strikeThrough')" style="text-decoration:line-through">T</button>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" title="Alinear izquierda" onclick="weCmd('justifyLeft')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+      </button>
+      <button class="webtn" title="Centrar" onclick="weCmd('justifyCenter')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+      <button class="webtn" title="Alinear derecha" onclick="weCmd('justifyRight')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button class="webtn" title="Justificar" onclick="weCmd('justifyFull')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" title="Lista con viñetas" onclick="weCmd('insertUnorderedList')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button class="webtn" title="Lista numerada" onclick="weCmd('insertOrderedList')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4" stroke-linecap="round"/><path d="M4 10h2" stroke-linecap="round"/><path d="M3 14h2a1 1 0 0 1 0 2H3a1 1 0 0 1 0 2h2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="wegrp">
+      <label class="webtn" title="Color de texto" style="gap:3px;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3L5 21M19 3l-4 18M5 9h14M3 15h18"/></svg>
+        <input type="color" id="wetxtcolor" value="#000000" style="width:18px;height:14px;border:none;padding:0;cursor:pointer;border-radius:3px" onchange="weCmd('foreColor',this.value)">
+      </label>
+      <label class="webtn" title="Color de fondo" style="gap:3px;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <input type="color" id="webgcolor" value="#ffff00" style="width:18px;height:14px;border:none;padding:0;cursor:pointer;border-radius:3px" onchange="weCmd('hiliteColor',this.value)">
+      </label>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" title="Deshacer (Ctrl+Z)" onclick="weCmd('undo')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+      </button>
+      <button class="webtn" title="Rehacer (Ctrl+Y)" onclick="weCmd('redo')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Área de escritura — hoja A4 -->
+  <div id="wearea">
+    <div id="wepage" contenteditable="true" spellcheck="true"
+      oninput="weUpdateCount()"
+      onkeyup="weUpdateToolbar()">
+    </div>
+  </div>
+
+  <!-- Pie — contador + botones -->
+  <div id="wefoot">
+    <span id="wecount">0 palabras · 0 caracteres</span>
+    <div style="display:flex;gap:7px">
+      <button class="shb" onclick="closeWordEditor()">Cancelar</button>
+      <button class="shb p" onclick="weConvertToPDF()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Convertir a PDF →
+      </button>
+    </div>
+  </div>
+
+</div>
+
 
 <!-- Sig modal -->
 <div class="backdrop" id="sigmodal">
@@ -704,13 +869,13 @@ const PR   = window.devicePixelRatio || 1;
 let isPro     = localStorage.getItem('rb_pro') === '1';
 
 // ── DETECCIÓN TWA (Google Play) ──────────────────────────────
-// Si la app se abre desde el contenedor TWA de Play Store,
-// activa Pro automáticamente (el usuario ya pagó 3,99€)
+// Solo se activa Pro si el referrer es exactamente el paquete
+// de tu app en Play Store. Esto lo configuras cuando tengas
+// el nombre de paquete definitivo (ej: com.rubrica.app)
+// POR AHORA: desactivado para no dar Pro gratis a todos.
 (function() {
-  const isTWA = document.referrer.startsWith('android-app://') ||
-                window.matchMedia('(display-mode: standalone)').matches &&
-                navigator.userAgent.includes('Android') &&
-                !localStorage.getItem('rb_web_mode');
+  const PKG = 'com.rubrica.app'; // <-- cambia esto por tu paquete real de Play Store
+  const isTWA = document.referrer === 'android-app://' + PKG + '/';
   if (isTWA && !localStorage.getItem('rb_pro')) {
     localStorage.setItem('rb_pro', '1');
     localStorage.setItem('rb_pro_code', 'TWA-PLAY-STORE');
@@ -1282,8 +1447,8 @@ function confirmTxt() {
 }
 
 // ── SAVE PDF ──────────────────────────────────────────────────────────────
-function sharePDF() { savePDF(true); }
-function savePDF(share=false) {
+function sharePDF() { openSaveModal(true); }
+function savePDF(share=false, docName='documento-firmado') {
   if(!pdfDoc){toast('No hay PDF abierto','err');return;}
   loading(true,'Generando PDF...');
   PDFLib.PDFDocument.load(pdfRaw.slice(0)).then(doc=>{
@@ -1313,12 +1478,12 @@ function savePDF(share=false) {
   }).then(bytes=>{
     loading(false);
     const blob=new Blob([bytes],{type:'application/pdf'});
-    if(share&&navigator.share){navigator.share({files:[new File([blob],'rubrica.pdf',{type:'application/pdf'})]}).catch(()=>dl(blob));}
-    else dl(blob);
+    if(share&&navigator.share){navigator.share({files:[new File([blob],docName+'.pdf',{type:'application/pdf'})]}).catch(()=>dl(blob,docName));}
+    else dl(blob,docName);
     toast('PDF guardado ✓','ok');
   }).catch(e=>{loading(false);toast('Error: '+e.message,'err');});
 }
-function dl(blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rubrica-firmado.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function dl(blob,name='documento-firmado'){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name.replace(/\.pdf$/i,'')+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 
 // ── THUMBNAILS ────────────────────────────────────────────────────────────
 let thumbsBuilt=false;
@@ -1556,6 +1721,271 @@ $('selbody').addEventListener('touchstart',e=>{e.preventDefault();startSelDrag(e
 // ── POLÍTICA DE PRIVACIDAD ────────────────────────────────────
 function openPrivacy() { $('privmodal').classList.add('on'); }
 function closePrivacy() { $('privmodal').classList.remove('on'); }
+
+// ── MODAL GUARDAR CON NOMBRE ──────────────────────────────────
+let _saveShare = false;
+function openSaveModal(share=false) {
+  if(!pdfDoc){toast('No hay PDF abierto','err');return;}
+  _saveShare = share;
+  // Sugerir nombre basado en el archivo actual o genérico
+  const inp = $('savename');
+  if(inp.value==='documento-firmado' || !inp.value) inp.value='documento-firmado';
+  $('savemodal').classList.add('on');
+  setTimeout(()=>{ inp.select(); }, 80);
+}
+function closeSaveModal() { $('savemodal').classList.remove('on'); }
+function doSaveWithName(share=false) {
+  const name = ($('savename').value.trim() || 'documento-firmado').replace(/\.pdf$/i,'');
+  closeSaveModal();
+  savePDF(share || _saveShare, name);
+}
+
+// ── CREAR NUEVO DOCUMENTO (PLANTILLAS) ───────────────────────
+// ── EDITOR TIPO WORD ──────────────────────────────────────────
+function openNewDoc() {
+  $('wordeditor').classList.add('on');
+  const pg = $('wepage');
+  if (!pg.innerHTML.trim()) {
+    pg.innerHTML = '<p><br></p>';
+  }
+  setTimeout(() => { pg.focus(); }, 100);
+}
+
+function closeWordEditor() {
+  $('wordeditor').classList.remove('on');
+}
+
+function weCmd(cmd, val=null) {
+  $('wepage').focus();
+  document.execCommand(cmd, false, val);
+  weUpdateToolbar();
+}
+
+function weUpdateToolbar() {
+  ['bold','italic','underline','strikethrough'].forEach(cmd => {
+    const btn = $('we-' + cmd);
+    if (btn) btn.classList.toggle('on', document.queryCommandState(cmd));
+  });
+}
+
+function weUpdateCount() {
+  const text = $('wepage').innerText || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.replace(/\n/g,'').length;
+  $('wecount').textContent = words + ' palabras · ' + chars + ' caracteres';
+}
+
+function weConvertToPDF() {
+  const pg = $('wepage');
+  const html = pg.innerHTML;
+  if (!html.trim() || html === '<p><br></p>') {
+    toast('El documento está vacío','err'); return;
+  }
+
+  loading(true, 'Convirtiendo a PDF...');
+  closeWordEditor();
+
+  // Usar pdf-lib para crear PDF con el contenido del editor
+  // Procesamos el HTML del contenteditable en bloques de texto
+  PDFLib.PDFDocument.create().then(async doc => {
+    const { rgb, StandardFonts } = PDFLib;
+    const W = 595, H = 842, ML = 56, MR = 56, MT = 60, MB = 56;
+    const maxW = W - ML - MR;
+
+    let page = doc.addPage([W, H]);
+    let yPos = H - MT;
+
+    const fReg  = await doc.embedFont(StandardFonts.Helvetica);
+    const fBold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const fIta  = await doc.embedFont(StandardFonts.HelveticaOblique);
+    const fBoldIta = await doc.embedFont(StandardFonts.HelveticaBoldOblique);
+
+    // Parsear el HTML del editor en líneas con formato
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+
+    function hexToRgb(hex) {
+      hex = hex.replace('#','');
+      if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+      const n = parseInt(hex, 16);
+      return rgb(((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255);
+    }
+
+    function getFontSize(el) {
+      // execCommand fontSize usa 1-7
+      const s = el.style && el.style.fontSize;
+      if (s) {
+        const n = parseFloat(s);
+        if (s.includes('pt')) return n;
+        if (s.includes('px')) return n * 0.75;
+        return n;
+      }
+      const sz = el.getAttribute && el.getAttribute('size');
+      if (sz) return [8,10,12,14,18,24,36][parseInt(sz)-1] || 12;
+      return null;
+    }
+
+    function getColor(el) {
+      const c = el.style && el.style.color;
+      if (c && c.startsWith('#')) return hexToRgb(c);
+      if (c && c.startsWith('rgb')) {
+        const m = c.match(/rgb\((\d+),(\d+),(\d+)\)/);
+        if (m) return rgb(+m[1]/255, +m[2]/255, +m[3]/255);
+      }
+      return null;
+    }
+
+    // Extraer bloques: cada <p>, <div>, <h1-h6>, <li>
+    function getBlocks(container) {
+      const blocks = [];
+      const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BR','BLOCKQUOTE']);
+      function walk(node, fmt) {
+        if (node.nodeType === 3) {
+          // texto
+          const txt = node.textContent;
+          if (txt) blocks[blocks.length-1]?.spans.push({text:txt, ...fmt});
+          return;
+        }
+        const tag = node.tagName;
+        if (!tag) return;
+        // Nuevo bloque
+        if (blockTags.has(tag) && blocks.length > 0 || tag === 'BR') {
+          blocks.push({spans:[], align:'left', size:12, isHeading:false, isList:false});
+        }
+        if (!blocks.length) blocks.push({spans:[], align:'left', size:12});
+
+        // Heredar formato
+        let f = {...fmt};
+        if (tag === 'B' || tag === 'STRONG') f.bold = true;
+        if (tag === 'I' || tag === 'EM')     f.italic = true;
+        if (tag === 'U')                      f.underline = true;
+        if (tag === 'S' || tag === 'STRIKE')  f.strike = true;
+        if (['H1','H2','H3'].includes(tag))   { f.bold = true; f.size = tag==='H1'?22:tag==='H2'?18:14; }
+        if (tag === 'LI') { blocks[blocks.length-1].isList = true; blocks[blocks.length-1].bullet = '• '; }
+
+        const sz = getFontSize(node);
+        if (sz) f.size = sz;
+        const col = getColor(node);
+        if (col) f.color = col;
+
+        // Alineación
+        const ta = node.style && node.style.textAlign;
+        if (ta) blocks[blocks.length-1].align = ta;
+
+        node.childNodes.forEach(ch => walk(ch, f));
+
+        if (blockTags.has(tag)) {
+          blocks.push({spans:[], align:'left', size:12});
+        }
+      }
+      blocks.push({spans:[], align:'left', size:12});
+      container.childNodes.forEach(ch => walk(ch, {bold:false, italic:false, underline:false, size:12, color:rgb(0.07,0.07,0.07)}));
+      return blocks.filter(b => b.spans.length > 0 || b.isList);
+    }
+
+    function chooseFont(bold, italic) {
+      if (bold && italic) return fBoldIta;
+      if (bold)           return fBold;
+      if (italic)         return fIta;
+      return fReg;
+    }
+
+    function addPage() {
+      page = doc.addPage([W, H]);
+      yPos = H - MT;
+      return page;
+    }
+
+    function drawLine(spans, size, align, bullet) {
+      if (yPos < MB + size + 4) addPage();
+
+      // Calcular texto completo para alineación
+      let totalW = 0;
+      const rendered = spans.map(sp => {
+        const f = chooseFont(sp.bold, sp.italic);
+        const w = f.widthOfTextAtSize(sp.text, size);
+        totalW += w;
+        return {f, w, sp};
+      });
+
+      let xOff = ML;
+      if (bullet) {
+        page.drawText(bullet, {x:ML, y:yPos, size, font:fReg, color:rgb(0.3,0.3,0.3)});
+        xOff = ML + fReg.widthOfTextAtSize(bullet, size) + 2;
+        totalW += xOff - ML;
+      }
+
+      if (align === 'center') xOff = (W - totalW) / 2;
+      else if (align === 'right') xOff = W - MR - totalW;
+
+      rendered.forEach(({f, w, sp}) => {
+        page.drawText(sp.text, {
+          x: xOff, y: yPos,
+          size: sp.size || size,
+          font: f,
+          color: sp.color || rgb(0.07,0.07,0.07)
+        });
+        xOff += w;
+      });
+
+      yPos -= size * 1.6;
+    }
+
+    function wrapAndDraw(spans, size, align, bullet) {
+      if (!spans.length) { yPos -= size * 1.2; return; }
+
+      // Unir todo el texto para calcular wrapping
+      const fullText = spans.map(s=>s.text).join('');
+      const words = fullText.split(' ');
+      const lineW = maxW - (bullet ? fReg.widthOfTextAtSize(bullet, size) + 4 : 0);
+
+      let line = '';
+      const lines = [];
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        const w = fReg.widthOfTextAtSize(test, size);
+        if (w > lineW && line) { lines.push(line); line = word; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+
+      // Repartir spans por líneas (simplificado: mismos estilos por párrafo)
+      lines.forEach((ln, i) => {
+        const lineSpans = [{...spans[0], text: ln}];
+        drawLine(lineSpans, size, align, i===0 ? bullet : (bullet ? '  ' : null));
+      });
+    }
+
+    const blocks = getBlocks(tmp);
+    for (const block of blocks) {
+      const size = block.spans[0]?.size || 12;
+      const align = block.align || 'left';
+      wrapAndDraw(block.spans, size, align, block.bullet || null);
+    }
+
+    return doc.save();
+
+  }).then(bytes => {
+    loading(false);
+    pdfRaw = bytes.buffer.slice(0);
+    return pdfjsLib.getDocument({data: new Uint8Array(bytes)}).promise;
+  }).then(doc => {
+    pdfDoc=doc; totPages=doc.numPages; curPage=1; paths=[]; activeSig=null; hideSel();
+    return pdfDoc.getPage(1);
+  }).then(p1 => {
+    const vp = p1.getViewport({scale:1});
+    baseScale = scale = (mainEl.clientWidth - 28) / vp.width;
+    $('dz').style.display = 'none'; cw.style.display = 'block';
+    $('savebtn').style.display = ''; $('dock').classList.add('on');
+    $('zfloat').classList.add('on');
+    updateNav(); return renderPage(1);
+  }).then(() => {
+    loading(false);
+    $('savename').value = 'mi-documento';
+    toast('Documento convertido a PDF ✓', 'ok');
+  }).catch(e => { loading(false); toast('Error: ' + e.message, 'err'); console.error(e); });
+}
+
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
