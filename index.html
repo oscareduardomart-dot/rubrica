@@ -786,9 +786,9 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <div class="shdl"></div>
     <div class="probadge">★</div>
     <p class="protit">Rúbrica Pro</p>
-    <p class="prosub" id="promsg">Desbloquea usos ilimitados por un único pago.</p>
+    <p class="prosub" id="promsg">Versión gratuita. Para uso ilimitado descarga la app.</p>
     <div style="padding:0 14px 10px;display:flex;flex-direction:column;gap:7px">
-      <button class="shb p" onclick="buyPro()">Comprar Pro — 3,99 €</button>
+      <!-- Sin compra en versión web -->
       <button class="shb" onclick="watchAd()">Ver anuncio (+3 usos gratis)</button>
 
       <button class="shb" onclick="closePro()">Ahora no</button>
@@ -997,7 +997,7 @@ let isPro     = localStorage.getItem('rb_pro') === '1';
 // el nombre de paquete definitivo (ej: com.rubrica.app)
 // POR AHORA: desactivado para no dar Pro gratis a todos.
 (function() {
-  const PKG = 'com.rubrica.app'; // <-- cambia esto por tu paquete real de Play Store
+ const PKG = '__PLAY_STORE_ONLY__'; // <-- cambia esto por tu paquete real de Play Store
   const isTWA = document.referrer === 'android-app://' + PKG + '/';
   if (isTWA && !localStorage.getItem('rb_pro')) {
     localStorage.setItem('rb_pro', '1');
