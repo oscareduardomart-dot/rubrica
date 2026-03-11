@@ -428,6 +428,10 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
 
   <!-- Menú desplegable ⋮ -->
   <div id="topmenu">
+    <button class="tmitem" onclick="weInsertImgToPDF();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Insertar imagen
+    </button>
     <button class="tmitem" onclick="openQR();closeTopMenu()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/></svg>
       Crear código QR
@@ -681,14 +685,6 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     </div>
 
     <div class="wegrp">
-      <label class="webtn" title="Insertar imagen / logo" style="cursor:pointer;gap:4px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        <span style="font-size:.65rem">Imagen</span>
-        <input type="file" id="weimgfile" accept="image/*" style="display:none" onchange="weInsertImage(this)">
-      </label>
-    </div>
-
-    <div class="wegrp">
       <button class="webtn" title="Deshacer (Ctrl+Z)" onclick="weCmd('undo')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
       </button>
@@ -786,9 +782,9 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <div class="shdl"></div>
     <div class="probadge">★</div>
     <p class="protit">Rúbrica Pro</p>
-    <p class="prosub" id="promsg">Versión gratuita. Para uso ilimitado descarga la app.</p>
+    <p class="prosub" id="promsg">Desbloquea usos ilimitados por un único pago.</p>
     <div style="padding:0 14px 10px;display:flex;flex-direction:column;gap:7px">
-      <!-- Sin compra en versión web -->
+      <button class="shb p" onclick="buyPro()">Comprar Pro — 3,99 €</button>
       <button class="shb" onclick="watchAd()">Ver anuncio (+3 usos gratis)</button>
 
       <button class="shb" onclick="closePro()">Ahora no</button>
@@ -997,7 +993,7 @@ let isPro     = localStorage.getItem('rb_pro') === '1';
 // el nombre de paquete definitivo (ej: com.rubrica.app)
 // POR AHORA: desactivado para no dar Pro gratis a todos.
 (function() {
- const PKG = '__PLAY_STORE_ONLY__'; // <-- cambia esto por tu paquete real de Play Store
+  const PKG = 'com.rubrica.app'; // <-- cambia esto por tu paquete real de Play Store
   const isTWA = document.referrer === 'android-app://' + PKG + '/';
   if (isTWA && !localStorage.getItem('rb_pro')) {
     localStorage.setItem('rb_pro', '1');
@@ -2226,6 +2222,27 @@ $('wepage').addEventListener('click', e => {
   }
 });
 
+
+// ── INSERTAR IMAGEN EN PDF ────────────────────────────────────
+function weInsertImgToPDF() {
+  if (!pdfDoc) { toast('Abre un PDF primero','err'); return; }
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function() {
+    var file = inp.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var cx = pcv.clientWidth/2, cy = pcv.clientHeight/2;
+      var sz = Math.min(pcv.clientWidth * 0.4, 200);
+      paths.push({type:'sig', page:curPage, x:cx-sz/2, y:cy-sz/2, w:sz, h:sz, data:e.target.result});
+      redraw(); selIdx=paths.length-1; showSel(); setTool('cursor');
+      toast('Imagen insertada — muévela y fíjala ✓','ok');
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
 // ── MENÚ ⋮ ───────────────────────────────────────────────────
 function toggleTopMenu() {
   $('topmenu').classList.toggle('on');
@@ -2304,37 +2321,9 @@ function weConvertToPDF() {
     toast('El documento está vacío','err'); return;
   }
 
-  // Clonar HTML y recoger imágenes ANTES de tocar el DOM
+  // Clonar HTML ANTES de tocar el DOM
   const htmlCopy = html;
-  const weImages = [];
-  const pgW = pg.offsetWidth  || 794;
-  const pgH = pg.offsetHeight || 1123;
-  // Obtener padding real del wepage para restar del origen
-  var pgStyle   = window.getComputedStyle(pg);
-  var padLeft   = parseFloat(pgStyle.paddingLeft)  || 0;
-  var padTop    = parseFloat(pgStyle.paddingTop)   || 0;
-  // Área de contenido = wepage sin padding
-  var contentW  = pgW - parseFloat(pgStyle.paddingLeft) - parseFloat(pgStyle.paddingRight);
-  var contentH  = pgH - parseFloat(pgStyle.paddingTop)  - parseFloat(pgStyle.paddingBottom);
 
-  pg.querySelectorAll('.we-img-wrap').forEach(function(wrap) {
-    var img = wrap.querySelector('img');
-    if (!img || !img.src) return;
-    // left/top son relativos al wepage con position:relative
-    // Los restamos del padding para obtener posición relativa al área de contenido
-    var rawL = parseFloat(wrap.style.left)   || 0;
-    var rawT = parseFloat(wrap.style.top)    || 0;
-    weImages.push({
-      src: img.src,
-      xPx: rawL,
-      yPx: rawT,
-      wPx: parseFloat(wrap.style.width)  || 80,
-      hPx: parseFloat(wrap.style.height) || 80,
-      pgWpx:   pgW,
-      padLeft: padLeft,
-      padTop:  padTop,
-    });
-  });
 
   loading(true, 'Generando PDF...');
 
@@ -2441,56 +2430,6 @@ function weConvertToPDF() {
         var size=block.spans[0]?block.spans[0].size||12:12;
         wrapAndDraw(block.spans,size,block.align||'left',block.bullet||null);
       });
-
-      // Incrustar imágenes flotantes
-      for (var wi of weImages) {
-        try {
-          // Cargar imagen en un elemento Image para obtener dimensiones reales
-          var embImg = await new Promise(function(resolve, reject) {
-            var imgEl = new Image();
-            imgEl.onload = function() {
-              // Dibujar en canvas temporal con el tamaño de destino en PDF
-              var scaleX = W / (wi.pgWpx || 794);
-              var iw2 = Math.round(wi.wPx * scaleX);
-              var ih2 = Math.round(wi.hPx * scaleX);
-              var tmpCv = document.createElement('canvas');
-              tmpCv.width  = iw2;
-              tmpCv.height = ih2;
-              var ctx2 = tmpCv.getContext('2d');
-              // Dibujar sin voltear — pdf-lib no voltea, el bug era otro
-              ctx2.drawImage(imgEl, 0, 0, iw2, ih2);
-              // Exportar como PNG siempre (más compatible)
-              var pngUrl = tmpCv.toDataURL('image/png');
-              var b64 = pngUrl.split(',')[1];
-              var bin = atob(b64);
-              var arr = new Uint8Array(bin.length);
-              for (var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
-              doc.embedPng(arr).then(resolve).catch(reject);
-            };
-            imgEl.onerror = reject;
-            imgEl.src = wi.src;
-          });
-          // Escala basada en el área de contenido (sin padding)
-          // wepage total en pantalla → area de contenido = pgWpx - 2*padLeft
-          var padL = wi.padLeft || 0;
-          var padT = wi.padTop  || 0;
-          var contentWpx = (wi.pgWpx || 794) - padL * 2;
-          var contentPDF = W - ML - MR; // área de contenido en PDF (595-85-85=425pt)
-          var sc = contentPDF / contentWpx;
-
-          // xPx/yPx son desde esquina top-left del wepage (incluye padding)
-          // Restar padding para obtener posición relativa al área de contenido
-          var relX = wi.xPx - padL;
-          var relY = wi.yPx - padT;
-
-          var ix = ML + relX * sc;
-          var iw = wi.wPx * sc;
-          var ih = wi.hPx * sc;
-          // PDF origen abajo-izquierda: Y = H - margen_top - posición_desde_arriba - altura
-          var iy = H - MT - (relY * sc) - ih;
-          doc.getPages().forEach(function(p){ p.drawImage(embImg,{x:ix,y:iy,width:iw,height:ih}); });
-        } catch(imgErr) { console.warn('Img skip:', imgErr); }
-      }
 
       var bytes = await doc.save();
 
